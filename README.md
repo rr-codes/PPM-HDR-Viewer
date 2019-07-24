@@ -1,19 +1,20 @@
 # PPM HDR Viewer
 
-Allows viewing of 10 bit HDR PPM images, with options for stereo viewing and flicker testing.
+Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for stereo viewing and flicker testing.
  
 **Installation**:
 
 1. Build and install OpenCV and DirectXTK Desktop 2015
 2. Open this project in Visual Studio. Go to `Solution Explorer > HDRViewr19 > Properties > C/C++ > General`, and change the paths of DirectXTK and OpenCV to their respective `include` directory paths. 
 3. Repeat for the library `lib` directories in `Linker > Additional Library Directories`
-4. Build and compile the project.
+4. Build and compile the project (using `x64`).
 
 **Requirements**:
 
 - Windows 10, Fall Creators Update 2018 or later
 - NVIDIA GPU
-- A 4K HDR (10 bit) capable monitor.
+- A 4K HDR (10 bit) capable monitor (2 for stereo mode)
+- At least four permutations of a single 4K 10 bit PPM image
 
 Full screen mode is required for proper viewing.
 

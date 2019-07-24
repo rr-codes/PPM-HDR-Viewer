@@ -15,6 +15,7 @@ Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for
 - NVIDIA GPU
 - A 4K HDR (10 bit) capable monitor (2 for stereo mode)
 - At least four permutations of a single 4K 10 bit PPM image
+- OpenCV v4.0+, DirectX 11, DirectXTK Windows 2015 API (June 2019 Update or above)
 
 Full screen mode is required for proper viewing.
 

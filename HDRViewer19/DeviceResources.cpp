@@ -5,10 +5,6 @@
 
 #include "pch.h"
 #include "DeviceResources.h"
-#include "Global.h"
-
-using namespace DirectX;
-using namespace DX;
 
 using Microsoft::WRL::ComPtr;
 
@@ -48,12 +44,14 @@ namespace
 };
 
 // Constructor for DeviceResources.
-DeviceResources::DeviceResources(
+DX::DeviceResources::DeviceResources(
+	int numWindows,
 	DXGI_FORMAT backBufferFormat,
 	DXGI_FORMAT depthBufferFormat,
 	UINT backBufferCount,
 	D3D_FEATURE_LEVEL minFeatureLevel,
 	unsigned int flags) noexcept :
+	m_numWindows(numWindows),
 	m_screenViewport{},
 	m_backBufferFormat(backBufferFormat),
 	m_depthBufferFormat(depthBufferFormat),
@@ -66,14 +64,14 @@ DeviceResources::DeviceResources(
 	m_options(flags | c_FlipPresent),
 	m_deviceNotify(nullptr)
 {
-	m_window = new HWND[Global::numWindows()];
-	m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[Global::numWindows()];
-	m_d3dRenderTargetView = new Microsoft::WRL::ComPtr<ID3D11RenderTargetView>[Global::numWindows()];
-	m_swapChain = new Microsoft::WRL::ComPtr<IDXGISwapChain1>[Global::numWindows()];
+	m_window = new HWND[m_numWindows];
+	m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[m_numWindows];
+	m_d3dRenderTargetView = new Microsoft::WRL::ComPtr<ID3D11RenderTargetView>[m_numWindows];
+	m_swapChain = new Microsoft::WRL::ComPtr<IDXGISwapChain1>[m_numWindows];
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
-void DeviceResources::CreateDeviceResources()
+void DX::DeviceResources::CreateDeviceResources()
 {
 	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
@@ -247,7 +245,7 @@ void DeviceResources::CreateDeviceResources()
 }
 
 // These resources need to be recreated every time the window size is changed.
-void DeviceResources::CreateWindowSizeDependentResources()
+void DX::DeviceResources::CreateWindowSizeDependentResources()
 {
 	if (!m_window)
 	{
@@ -258,7 +256,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 	ID3D11RenderTargetView* nullViews[] = { nullptr };
 	m_d3dContext->OMSetRenderTargets(_countof(nullViews), nullViews, nullptr);
 
-	for (int i = 0; i < Global::numWindows(); i++) {
+	for (int i = 0; i < m_numWindows; i++) {
 		m_d3dRenderTargetView[i].Reset();
 		m_renderTarget[i].Reset();
 	}
@@ -272,7 +270,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 	UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
 	DXGI_FORMAT backBufferFormat = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? NoSRGB(m_backBufferFormat) : m_backBufferFormat;
 
-	for (int i = 0; i < Global::numWindows(); i++) {
+	for (int i = 0; i < m_numWindows; i++) {
 
 		if (m_swapChain[i])
 		{
@@ -389,7 +387,7 @@ void DeviceResources::CreateWindowSizeDependentResources()
 }
 
 // This method is called when the Win32 window is created (or re-created).
-void DeviceResources::SetWindow(int i, HWND window, int width, int height)
+void DX::DeviceResources::SetWindow(int i, HWND window, int width, int height)
 {
 	m_window[i] = window;
 
@@ -399,7 +397,7 @@ void DeviceResources::SetWindow(int i, HWND window, int width, int height)
 }
 
 // This method is called when the Win32 window changes size
-bool DeviceResources::WindowSizeChanged(int i, int width, int height)
+bool DX::DeviceResources::WindowSizeChanged(int i, int width, int height)
 {
 	RECT newRc;
 	newRc.left = newRc.top = 0;
@@ -419,7 +417,7 @@ bool DeviceResources::WindowSizeChanged(int i, int width, int height)
 }
 
 // Recreate all device resources and set them back to the current state.
-void DeviceResources::HandleDeviceLost()
+void DX::DeviceResources::HandleDeviceLost()
 {
 	if (m_deviceNotify)
 	{
@@ -431,7 +429,7 @@ void DeviceResources::HandleDeviceLost()
 
 	
 
-	for (int i = 0; i < Global::numWindows(); i++)
+	for (int i = 0; i < m_numWindows; i++)
 	{
 		m_d3dRenderTargetView[i].Reset();
 		m_renderTarget[i].Reset();
@@ -464,22 +462,9 @@ void DeviceResources::HandleDeviceLost()
 }
 
 // Present the contents of the swap chain to the screen.
-void DeviceResources::Present(int i)
+void DX::DeviceResources::Present(int i)
 {
-	HRESULT hr;
-	if (m_options & c_AllowTearing)
-	{
-		// Recommended to always use tearing if supported when using a sync interval of 0.
-		hr = m_swapChain[i]->Present(0, DXGI_PRESENT_ALLOW_TEARING);
-	}
-	else
-	{
-		// The first argument instructs DXGI to block until VSync, putting the application
-		// to sleep until the next VSync. This ensures we don't waste any cycles rendering
-		// frames that will never be displayed to the screen.
-		hr = m_swapChain[i]->Present(1, 0);
-
-	}
+	auto hr = m_swapChain[i]->Present(1, 0);
 	
 
 	// Discard the contents of the render target.
@@ -516,7 +501,7 @@ void DeviceResources::Present(int i)
 	}
 }
 
-void DeviceResources::CreateFactory()
+void DX::DeviceResources::CreateFactory()
 {
 #if defined(_DEBUG) && (_WIN32_WINNT >= 0x0603 /*_WIN32_WINNT_WINBLUE*/)
 	bool debugDXGI = false;
@@ -550,7 +535,7 @@ void DeviceResources::CreateFactory()
 
 // This method acquires the first available hardware adapter.
 // If no such adapter can be found, *ppAdapter will be set to nullptr.
-void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
+void DX::DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 {
 	*ppAdapter = nullptr;
 
@@ -618,10 +603,8 @@ void DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 }
 
 // Sets the color space for the swap chain in order to handle HDR output.
-void DeviceResources::UpdateColorSpace(int i)
+void DX::DeviceResources::UpdateColorSpace(int i)
 {
-	DXGI_COLOR_SPACE_TYPE colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
-
 	bool isDisplayHDR10 = false;
 
 #if defined(NTDDI_WIN10_RS2)
@@ -647,26 +630,7 @@ void DeviceResources::UpdateColorSpace(int i)
 	
 #endif
 
-	//if ((m_options & c_EnableHDR) && isDisplayHDR10)
-	//{
-	//	switch (m_backBufferFormat)
-	//	{
-	//	case DXGI_FORMAT_R10G10B10A2_UNORM:
-	//		// The application creates the HDR10 signal.
-			colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
-		//	break;
-
-		//case DXGI_FORMAT_R16G16B16A16_FLOAT:
-		//	// The system creates the HDR10 signal; application uses linear values.
-		//	colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G10_NONE_P709;
-		//	break;
-
-		//default:
-		//	break;
-		//}
-//	}
-
-	m_colorSpace = colorSpace;
+	m_colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
 
 	if (m_swapChain == nullptr)
 	{
@@ -677,10 +641,10 @@ void DeviceResources::UpdateColorSpace(int i)
 	if (SUCCEEDED(m_swapChain[i].As(&swapChain3)))
 	{
 		UINT colorSpaceSupport = 0;
-		if (SUCCEEDED(swapChain3->CheckColorSpaceSupport(colorSpace, &colorSpaceSupport))
+		if (SUCCEEDED(swapChain3->CheckColorSpaceSupport(m_colorSpace, &colorSpaceSupport))
 			&& (colorSpaceSupport & DXGI_SWAP_CHAIN_COLOR_SPACE_SUPPORT_FLAG_PRESENT))
 		{
-			ThrowIfFailed(swapChain3->SetColorSpace1(colorSpace));
+			ThrowIfFailed(swapChain3->SetColorSpace1(m_colorSpace));
 		}
 	}
 }

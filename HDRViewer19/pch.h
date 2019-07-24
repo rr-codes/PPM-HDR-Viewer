@@ -59,7 +59,6 @@
 
 #include <stdio.h>
 
-#include "Global.h"
 
 #ifdef _DEBUG
 #include <dxgidebug.h>

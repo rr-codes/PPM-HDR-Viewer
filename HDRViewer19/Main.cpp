@@ -7,16 +7,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "Global.h"
-
-#define GET_FILENAME(type, eye) (foldername.append(line).append((eye)).append((type)))
-
-
-
-using namespace DirectX;
+#include <filesystem>
 
 HWND* windows;
-
+int numWindows = 0;
 
 namespace
 {
@@ -45,69 +39,100 @@ extern "C"
  * <br>
  * The second line should contain the absolute path to the folder containing the images, with UNIX path separators (/), with the last character being '/'
  *  
- * <br>
- * The third line should be a single integer greater than 0 to represent the paper white nits parameter
- *  
  * <br> 
  * The remaining lines should be the set of unique images, one image per line, without any prefixes or suffixes. In the folder, there <b>must</b> four files per filename, with the prefixes "orig__" and "desc__", and suffixes "_L.ppm" and "_R.ppm". 
  * The file may terminate with one or zero newline character.
  * 
- * <br>
- * For reference, an example file would be:
- * <code>
- * 3
- * C:/path/to/folder/
- * 1234
- * file1
- * file2
- * </code>
- * 
  * <b>Note</b>: If the user is at the last image in the folder, pressing the space bar will navigate to the first image in the folder. If the images cannot be found, an exception will be thrown.
  */
-void read(_In_ const std::string& filename)
+// void read(_In_ const std::string& filename)
+// {
+// 	std::vector<std::vector<std::string>> mat;
+// 	std::string line;
+// 	std::ifstream file(filename);
+// 	std::string raw;
+//
+// 	static std::string orig = ".ppm", desc = "_dec.ppm", left = "_L", right = "_R";
+//
+// 	static std::string foldername;
+//
+// 	if (file.is_open())
+// 	{
+// 		std::getline(file, raw);
+// 		char m = raw.front();
+//
+// 		std::getline(file, foldername);
+//
+// 		while (getline(file, line))
+// 		{
+// 			std::vector<std::string> lineVector;
+//
+// 			lineVector.push_back(foldername + line + left  + orig);
+// 			lineVector.push_back(foldername + line + left  + desc);
+// 			lineVector.push_back(foldername + line + right + orig);
+// 			lineVector.push_back(foldername + line + right + desc);
+//
+// 			mat.push_back(lineVector);
+// 		}
+//
+// 		file.close();
+//
+// 		Global::mode = static_cast<Global::Mode>(m);
+// 		Global::files = mat;
+// 	}
+// 	else {
+// 		throw std::exception("Configuration file not found.");
+// 	}
+// }
+
+template <typename Element>
+static bool vectorContains(std::vector<Element> vec, Element element)
 {
-	std::vector<std::vector<std::string>> mat;
-	std::string line;
-	std::ifstream file(filename);
-	std::string raw;
-
-	static std::string orig = ".ppm", desc = "_dec.ppm", left = "_L", right = "_R";
-
-	static std::string foldername;
-
-	if (file.is_open())
-	{
-		std::getline(file, raw);
-		char m = raw.front();
-
-		std::string paperWhiteNitesRaw;
-		std::getline(file, paperWhiteNitesRaw);
-
-		std::getline(file, foldername);
-
-		while (getline(file, line))
-		{
-			std::vector<std::string> lineVector;
-
-			lineVector.push_back(foldername + line + left  + orig);
-			lineVector.push_back(foldername + line + left  + desc);
-			lineVector.push_back(foldername + line + right + orig);
-			lineVector.push_back(foldername + line + right + desc);
-
-			mat.push_back(lineVector);
-		}
-
-		file.close();
-
-		Global::mode = static_cast<Global::Mode>(m);
-		Global::nits = std::stoi(paperWhiteNitesRaw);
-		Global::files = mat;
-	}
-	else {
-		throw std::exception("Configuration file not found.");
-	}
+	return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
+std::vector<std::string> ParseCommandArguments(LPWSTR lpCmdLine)
+{
+	std::wstring s(lpCmdLine);
+	const std::wstring delimiter = L" ";
+	const std::string asString(s.begin(), s.end());
+
+	std::istringstream iss(asString);
+
+	std::vector<std::string> arguments(
+		std::istream_iterator<std::string>{iss}, 
+		std::istream_iterator<std::string>{}
+	);
+
+	return arguments;
+}
+
+bool argumentsAreValid(std::vector<std::string> arguments)
+{
+	if (arguments.empty())
+	{
+		return false;
+	}
+
+	if (vectorContains<std::string>(arguments, "-flicker") && vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 3)
+	{
+		return false;
+	}
+
+	if (vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 2)
+	{
+		return false;
+	}
+
+	if (arguments.size() != 1)
+	{
+		return false;
+	}
+
+	const std::filesystem::path path(arguments.back());
+
+	return is_directory(path);
+}
 
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -115,7 +140,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	if (!XMVerifyCPUSupport())
+	if (!DirectX::XMVerifyCPUSupport())
 		return 1;
 
 	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
@@ -123,21 +148,45 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		return 1;
 
 	MSG msg = {};
+	//
 
-	read("C:/Users/Richard/Desktop/input.txt");
+	auto arguments = ParseCommandArguments(lpCmdLine);
+	auto shouldFlicker = false;
+	auto numWindows = 1;
 
+	if (vectorContains<std::string>(arguments, "-flicker"))
+	{
+		shouldFlicker = true;
+	}
+
+	if (vectorContains<std::string>(arguments, "-stereo"))
+	{
+		numWindows = 2;
+	}
 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
+	if (!argumentsAreValid(arguments))
+	{
+		const auto result = MessageBox(
+			nullptr, 
+			L"Malformed command. Correct format is `HDRViewer19.exe [-flicker] [-stereo] C:/path`", 
+			L"Error", 
+			0
+		);
 
-	g_game = std::make_unique<Game>();
+		if (result == 1) exit(1);
+	}
+
+
+	g_game = std::make_unique<Game>(arguments.back(), numWindows, shouldFlicker);
 	RECT rc;
 
-	windows = new HWND[Global::numberOfFiles()];
+	windows = new HWND[numWindows];
 
 
-	for (int i = 0; i < Global::numWindows(); i++) {
+	for (int i = 0; i < numWindows; i++) {
 
 		// Register class and create window
 		{
@@ -230,7 +279,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
 	auto wndIndex = 0;
-	for (int i = 0; i < Global::numWindows(); i++)
+	for (int i = 0; i < numWindows; i++)
 	{
 		if (windows[i] == hWnd) wndIndex = i;
 	}

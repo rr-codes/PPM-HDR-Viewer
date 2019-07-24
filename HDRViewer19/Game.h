@@ -15,14 +15,7 @@
 class Game final : public DX::IDeviceNotify
 {
 public:
-	struct ThreadParams
-	{
-		int i;
-		Game* game;
-		std::string str;
-	};
-
-	Game() noexcept(false);
+	Game(const std::string& folderPath, int numWindows, bool flicker) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
@@ -33,7 +26,8 @@ public:
 	// IDeviceNotify
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
-	void getImagesAsTextures(Microsoft::WRL::ComPtr<struct ID3D11Texture2D>* textures);
+	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
+	static std::vector<std::vector<std::string>> getFiles(const std::string& folder);
 
 	// Messages
 	void OnActivated();
@@ -55,25 +49,28 @@ private:
 
 	void Update(DX::StepTimer const& timer);
 
-
 	void CreateDeviceDependentResources();
 	void CreateWindowSizeDependentResources();
 
 	// Device resources.
-	std::unique_ptr<DX::DeviceResources>    m_deviceResources;
+	std::unique_ptr<DX::DeviceResources> m_deviceResources;
 
 	// Rendering loop timer.
-	DX::StepTimer                           m_timer;
+	DX::StepTimer m_timer;
 
 	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
 	std::unique_ptr<DX::RenderTexture>* m_hdrScene;
 	std::unique_ptr<DirectX::ToneMapPostProcess>* m_toneMap;
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shaderResourceViews[4];
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>* m_shaderResourceViews;
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>* m_textures;
 
+	bool* m_flickerFrameFlag;
+	int m_imageSetIndex = 0;
 
-	ThreadParams threadParams;
-	DWORD   dwThreadIdArray;
-	HANDLE  hThreadArray;
+	int m_numberOfWindows = 1;
+	bool m_flickerEnable = false;
+
+	std::vector<std::vector<std::string>> m_files;
 };

@@ -38,12 +38,6 @@
     <ClCompile Include="RenderTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ToneMapper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Global.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -59,12 +53,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RenderTexture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ToneMapper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Global.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

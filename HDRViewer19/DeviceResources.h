@@ -26,11 +26,14 @@ namespace DX
 		static const unsigned int c_AllowTearing = 0x2;
 		static const unsigned int c_EnableHDR = 0x4;
 
-		DeviceResources(DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
+		DeviceResources(
+			int numWindows = 1,
+			DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
 			DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
 			UINT backBufferCount = 2,
 			D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0,
-			unsigned int flags = c_FlipPresent) noexcept;
+			unsigned int flags = c_FlipPresent
+		) noexcept;
 
 		void CreateDeviceResources();
 		void CreateWindowSizeDependentResources();
@@ -116,5 +119,7 @@ namespace DX
 
 		// The IDeviceNotify can be held directly as it owns the DeviceResources.
 		IDeviceNotify* m_deviceNotify;
+
+		int m_numWindows = 1;
 	};
 }

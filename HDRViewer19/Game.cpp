@@ -268,7 +268,7 @@ void Game::CreateDeviceDependentResources()
 		m_toneMap[i] = std::make_unique<DirectX::ToneMapPostProcess>(device);
 
 		m_toneMap[i]->SetOperator(DirectX::ToneMapPostProcess::None);
-		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Static);
+		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Rec2020);
 
 		m_toneMap[i]->SetST2084Parameter(10000);
 	}

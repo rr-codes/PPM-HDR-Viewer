@@ -26,65 +26,6 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-/**
- * Reads the configuration *.txt file. The user may cyclically navigate through the set of images in the specified folder by pressing the space bar to go to the next image.
- * 
- * <br>
- * The first line should be a single integer from 1 to 4 to represent the mode:
- *  - <b>1:</b> monocular flicker
- *  - <b>2:</b> stereo flicker
- *  - <b>3:</b> monocular (no flicker)
- *  - <b>4:</b> stereo (no flicker)
- *  
- * <br>
- * The second line should contain the absolute path to the folder containing the images, with UNIX path separators (/), with the last character being '/'
- *  
- * <br> 
- * The remaining lines should be the set of unique images, one image per line, without any prefixes or suffixes. In the folder, there <b>must</b> four files per filename, with the prefixes "orig__" and "desc__", and suffixes "_L.ppm" and "_R.ppm". 
- * The file may terminate with one or zero newline character.
- * 
- * <b>Note</b>: If the user is at the last image in the folder, pressing the space bar will navigate to the first image in the folder. If the images cannot be found, an exception will be thrown.
- */
-// void read(_In_ const std::string& filename)
-// {
-// 	std::vector<std::vector<std::string>> mat;
-// 	std::string line;
-// 	std::ifstream file(filename);
-// 	std::string raw;
-//
-// 	static std::string orig = ".ppm", desc = "_dec.ppm", left = "_L", right = "_R";
-//
-// 	static std::string foldername;
-//
-// 	if (file.is_open())
-// 	{
-// 		std::getline(file, raw);
-// 		char m = raw.front();
-//
-// 		std::getline(file, foldername);
-//
-// 		while (getline(file, line))
-// 		{
-// 			std::vector<std::string> lineVector;
-//
-// 			lineVector.push_back(foldername + line + left  + orig);
-// 			lineVector.push_back(foldername + line + left  + desc);
-// 			lineVector.push_back(foldername + line + right + orig);
-// 			lineVector.push_back(foldername + line + right + desc);
-//
-// 			mat.push_back(lineVector);
-// 		}
-//
-// 		file.close();
-//
-// 		Global::mode = static_cast<Global::Mode>(m);
-// 		Global::files = mat;
-// 	}
-// 	else {
-// 		throw std::exception("Configuration file not found.");
-// 	}
-// }
-
 template <typename Element>
 static bool vectorContains(std::vector<Element> vec, Element element)
 {

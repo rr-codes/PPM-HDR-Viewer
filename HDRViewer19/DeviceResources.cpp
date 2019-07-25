@@ -51,7 +51,6 @@ DX::DeviceResources::DeviceResources(
 	UINT backBufferCount,
 	D3D_FEATURE_LEVEL minFeatureLevel,
 	unsigned int flags) noexcept :
-	m_numWindows(numWindows),
 	m_screenViewport{},
 	m_backBufferFormat(backBufferFormat),
 	m_depthBufferFormat(depthBufferFormat),
@@ -62,7 +61,8 @@ DX::DeviceResources::DeviceResources(
 	m_outputSize{ 0, 0, 1, 1 },
 	m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
 	m_options(flags | c_FlipPresent),
-	m_deviceNotify(nullptr)
+	m_deviceNotify(nullptr),
+	m_numWindows(numWindows)
 {
 	m_window = new HWND[m_numWindows];
 	m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[m_numWindows];

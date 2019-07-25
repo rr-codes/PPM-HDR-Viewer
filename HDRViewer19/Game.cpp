@@ -386,7 +386,7 @@ std::vector<std::vector<std::string>> Game::getFiles(const std::string& folder)
 		index++;
 	}
 
-	if ((index - 1) % 4 != 0)
+	if ((index) % 4 != 0)
 	{
 		const auto result = MessageBox(
 			nullptr, 

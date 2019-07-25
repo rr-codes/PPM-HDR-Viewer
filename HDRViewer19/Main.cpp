@@ -60,15 +60,10 @@ bool argumentsAreValid(std::vector<std::string> arguments)
 		return false;
 	}
 
-	if (vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 2)
+	if ((vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo")) && arguments.size() != 2)
 	{
 		return false;
-	}
-
-	if (arguments.size() != 1)
-	{
-		return false;
-	}
+	} 
 
 	const std::filesystem::path path(arguments.back());
 
@@ -91,6 +86,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	MSG msg = {};
 	//
 
+
 	auto arguments = ParseCommandArguments(lpCmdLine);
 	auto shouldFlicker = false;
 	auto numWindows = 1;
@@ -110,9 +106,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	if (!argumentsAreValid(arguments))
 	{
+		auto str = "contains '-flicker1: " + std::to_string(vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 2);
+
 		const auto result = MessageBox(
 			nullptr, 
-			L"Malformed command. Correct format is `HDRViewer19.exe [-flicker] [-stereo] C:/path`", 
+			std::wstring(str.begin(), str.end()).c_str(), 
 			L"Error", 
 			0
 		);

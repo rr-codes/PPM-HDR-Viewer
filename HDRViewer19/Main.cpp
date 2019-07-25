@@ -55,16 +55,6 @@ bool argumentsAreValid(std::vector<std::string> arguments)
 		return false;
 	}
 
-	if (vectorContains<std::string>(arguments, "-flicker") && vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 3)
-	{
-		return false;
-	}
-
-	if ((vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo")) && arguments.size() != 2)
-	{
-		return false;
-	} 
-
 	const std::filesystem::path path(arguments.back());
 
 	return is_directory(path);
@@ -87,7 +77,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	//
 
 
-	auto arguments = ParseCommandArguments(lpCmdLine);
+	//auto arguments = ParseCommandArguments(lpCmdLine);
+
+	std::vector<std::string> arguments = { 
+		"-flicker", 
+		"-stereo",
+		"C:\\Users\\lab\\Desktop\\DSC8bpp" 
+	};
+
 	auto shouldFlicker = false;
 	auto numWindows = 1;
 

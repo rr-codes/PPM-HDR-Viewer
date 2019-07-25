@@ -463,19 +463,12 @@ void DX::DeviceResources::HandleDeviceLost()
 
 void DX::DeviceResources::ThreadPresent()
 {
-	auto threads = new std::thread[m_numWindows];
+	std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
+	std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
 
-	for (int i = 0; i < m_numWindows; i++)
-	{
-		threads[i] = std::thread([&]() { m_swapChain[i]->Present(1, 0); });
-	}
 
-	for (int i = 0; i < m_numWindows; i++)
-	{
-		threads[i].join();
-	}
-
-	delete[] threads;
+	one.join();
+	two.join();
 }
 
 // CleanFrame the contents of the swap chain to the screen.

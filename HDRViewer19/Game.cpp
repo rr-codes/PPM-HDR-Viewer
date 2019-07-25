@@ -17,7 +17,7 @@ using Microsoft::WRL::ComPtr;
  *  
  * TODO: Use multithreading to resolve the asynchronous issue. Specifically, given 1 device and 1 adapter, with 2 outputs (1 swapchain per window per output).  
  */
-static float rate = 0.1;
+static float rate = 1.0;
 
 
 Game::Game(const std::string& folderPath, int numWindows, bool flicker) noexcept(false)

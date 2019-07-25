@@ -4,9 +4,8 @@ Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for
  
 ### Installation
 
-1. Build and install OpenCV and DirectXTK Desktop 2015
-2. Open this project in Visual Studio. Go to `Solution Explorer > HDRViewr19 > Properties > C/C++ > General`, and change the paths of DirectXTK and OpenCV to their respective `include` directory paths. 
-3. Repeat for the library `lib` directories in `Linker > Additional Library Directories`
+1. Build and install OpenCV and my `DirectXTK_Desktop_2019_Win10` fork (available [here](https://github.com/richardrobinson0924/DirectXTK)) using `x64`
+2. Set the environment variables `DirectXTK_Path` to `...\DirectXTK` and `OpenCV_Path` to `...\opencv\build`
 4. Build and compile the project (using `x64`).
 
 ### Requirements
@@ -15,7 +14,7 @@ Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for
 - NVIDIA GPU
 - A 4K HDR (10 bit) capable monitor (2 for stereo mode)
 - At least four permutations of a single 4K 10 bit PPM image
-- OpenCV v4.0+, DirectX 11, DirectXTK Windows 2015 API (June 2019 Update or above)
+- OpenCV v4.0+, DirectX 11, DirectXTK fork
 
 Full screen mode is required for proper viewing.
 

@@ -99,9 +99,11 @@ void Game::Update(DX::StepTimer const& timer)
 		Render(i);
 	}
 
+	m_deviceResources->ThreadPresent();
+
 	for (int i = 0; i < m_numberOfWindows; i++)
 	{
-		m_deviceResources->Present(i);
+		m_deviceResources->CleanFrame(i);
 	}
 
 	// TODO: Add your game logic here.
@@ -166,7 +168,7 @@ void Game::Render(int i)
 	context->PSSetShaderResources(0, 1, nullsrv);
 
 	// Show the new frame.
-	// m_deviceResources->Present(i);
+	// m_deviceResources->CleanFrame(i);
 
 	m_flickerFrameFlag[i] = !m_flickerFrameFlag[i];
 }
@@ -313,11 +315,6 @@ void Game::OnDeviceRestored()
 
 void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 {
-
-	/*
-	 * If FLICKER is false, (2) and (4) are not shown (left and right, respectively)
-	 * If NUM_WINDOWS is 1, (3) and (4) are not shown (uncompressed and compressed, respectively)
-	 */
 	auto filenames = m_files[m_imageSetIndex];
 
 	for (int i = 0; i < m_numberOfWindows * 2; i++)

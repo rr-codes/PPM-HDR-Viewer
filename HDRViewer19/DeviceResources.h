@@ -40,8 +40,9 @@ namespace DX
 		void SetWindow(int i, HWND window, int width, int height);
 		bool WindowSizeChanged(int i, int width, int height);
 		void HandleDeviceLost();
+		void ThreadPresent();
 		void RegisterDeviceNotify(IDeviceNotify* deviceNotify) { m_deviceNotify = deviceNotify; }
-		void Present(int i);
+		void CleanFrame(int i);
 
 		// Device Accessors.
 		RECT GetOutputSize() const { return m_outputSize; }

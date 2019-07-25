@@ -461,10 +461,27 @@ void DX::DeviceResources::HandleDeviceLost()
 	}
 }
 
-// Present the contents of the swap chain to the screen.
-void DX::DeviceResources::Present(int i)
+void DX::DeviceResources::ThreadPresent()
 {
-	auto hr = m_swapChain[i]->Present(1, 0);
+	auto threads = new std::thread[m_numWindows];
+
+	for (int i = 0; i < m_numWindows; i++)
+	{
+		threads[i] = std::thread([&]() { m_swapChain[i]->Present(1, 0); });
+	}
+
+	for (int i = 0; i < m_numWindows; i++)
+	{
+		threads[i].join();
+	}
+
+	delete[] threads;
+}
+
+// CleanFrame the contents of the swap chain to the screen.
+void DX::DeviceResources::CleanFrame(int i)
+{
+	//auto hr = m_swapChain[i]->CleanFrame(1, 0);
 	
 
 	// Discard the contents of the render target.
@@ -478,15 +495,12 @@ void DX::DeviceResources::Present(int i)
 		m_d3dContext->DiscardView(m_d3dDepthStencilView.Get());
 	}
 
+	HRESULT hr = S_OK;
+
 	// If the device was removed either by a disconnection or a driver upgrade, we
 	// must recreate all device resources.
 	if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 	{
-#ifdef _DEBUG
-		char buff[64] = {};
-		sprintf_s(buff, "Device Lost on Present: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr);
-		OutputDebugStringA(buff);
-#endif
 		HandleDeviceLost();
 	}
 	else

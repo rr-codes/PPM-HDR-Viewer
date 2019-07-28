@@ -1,6 +1,6 @@
 # PPM HDR Viewer
 
-Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for stereo viewing and flicker testing.
+Allows viewing of steroscopic 10 bit HDR PPM images via OpenCV + DirectXTK, with options for stereo viewing and flicker testing.
  
 ### Installation
 
@@ -12,25 +12,22 @@ Allows viewing of 10 bit HDR PPM images via OpenCV + DirectXTK, with options for
 
 - Windows 10, Fall Creators Update 2018 or later
 - NVIDIA GPU
-- A 4K HDR (10 bit) capable monitor (2 for stereo mode)
+- 2 4K HDR (10 bit) capable monitors
 - At least four permutations of a single 4K 10 bit PPM image
 - OpenCV v4.0+, DirectX 11, DirectXTK fork
-
-Full screen mode is required for proper viewing.
 
 ### Usage
 
 In Command Prompt: 
 
 ```
-HDRViewer19.exe [-flicker] [-stereo] path
+HDRViewer19.exe [-flicker] path
 ```
 
 - `flicker`: flickers between the first and the third permutations of an image at a rate of 100ms
-- `stereo`: opens two windows containing the first and second permutations of an image. If both `stereo` and `flicker` are enabled, the second and fourth permutations flicker between themselves.
 - `path`: the absolute path to the directory containing the images. It is required that there are four (alphabetically) consecutive permutations of each image in the folder, even if `flicker` and `stereo` are disabled.
 
-To enter or exit full screen mode, click `Alt + Enter`
+Press the space bar to cycle through the images in `path`. To quit the app, press `Esc`
 
 ### Credits
 

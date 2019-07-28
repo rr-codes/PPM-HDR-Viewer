@@ -26,38 +26,10 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-template <typename Element>
-static bool vectorContains(std::vector<Element> vec, Element element)
-{
-	return std::find(vec.begin(), vec.end(), element) != vec.end();
-}
-
-std::vector<std::string> ParseCommandArguments(LPWSTR lpCmdLine)
-{
-	std::wstring s(lpCmdLine);
-	const std::wstring delimiter = L" ";
-	const std::string asString(s.begin(), s.end());
-
-	std::istringstream iss(asString);
-
-	std::vector<std::string> arguments(
-		std::istream_iterator<std::string>{iss}, 
-		std::istream_iterator<std::string>{}
-	);
-
-	return arguments;
-}
-
 bool argumentsAreValid(std::vector<std::string> arguments)
 {
-	if (arguments.empty())
-	{
-		return false;
-	}
-
 	const std::filesystem::path path(arguments.back());
-
-	return is_directory(path);
+	return is_directory(path) && !arguments.empty();
 }
 
 // Entry point
@@ -74,26 +46,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		return 1;
 
 	MSG msg = {};
-	//
 
-
-	//auto arguments = ParseCommandArguments(lpCmdLine);
-
-	std::vector<std::string> arguments = { 
-		"-flicker", 
-		"-stereo",
-		"C:\\Users\\lab\\Desktop\\DSC8bpp" 
-	};
+	auto arguments = string::split(string::to_string(lpCmdLine));
 
 	auto shouldFlicker = false;
 	auto numWindows = 1;
 
-	if (vectorContains<std::string>(arguments, "-flicker"))
+	if (vector::contains<std::string>(arguments, "-flicker"))
 	{
 		shouldFlicker = true;
 	}
 
-	if (vectorContains<std::string>(arguments, "-stereo"))
+	if (vector::contains<std::string>(arguments, "-stereo"))
 	{
 		numWindows = 2;
 	}
@@ -103,7 +67,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	if (!argumentsAreValid(arguments))
 	{
-		auto str = "contains '-flicker1: " + std::to_string(vectorContains<std::string>(arguments, "-flicker") || vectorContains<std::string>(arguments, "-stereo") && arguments.size() != 2);
+		std::string str = "Error parsing arguments.";
 
 		const auto result = MessageBox(
 			nullptr, 
@@ -128,13 +92,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		{
 			LPCWSTR name = (i == 0) ? L"LEFT" : L"RIGHT";
 
-			if (i == 0)
-			{
-				rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
-			} else
-			{
-				rc = { 3840, 0, static_cast<LONG>(w) + 3840, static_cast<LONG>(h) };
-			}
+			rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
 
 			// Register class
 			WNDCLASSEXW wcex = {};
@@ -240,6 +198,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (game && wParam == VK_SPACE)
 		{
 			game->OnSpaceKeyDown();
+		}
+		if (game && wParam == VK_ESCAPE)
+		{
+			game->OnEscapeKeyDown();
 		}
 		break;
 

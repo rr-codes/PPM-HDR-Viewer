@@ -22,6 +22,7 @@ public:
 	// Basic game loop
 	void Tick();
 	void OnSpaceKeyDown();
+	void OnEscapeKeyDown();
 
 	// IDeviceNotify
 	virtual void OnDeviceLost() override;

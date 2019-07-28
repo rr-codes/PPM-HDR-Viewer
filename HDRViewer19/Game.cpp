@@ -17,7 +17,7 @@ using Microsoft::WRL::ComPtr;
  *  
  * TODO: Use multithreading to resolve the asynchronous issue. Specifically, given 1 device and 1 adapter, with 2 outputs (1 swapchain per window per output).  
  */
-static float rate = 1.0;
+static float rate = 1.0f;
 
 
 Game::Game(const std::string& folderPath, int numWindows, bool flicker) noexcept(false)
@@ -65,15 +65,15 @@ void Game::Initialize(HWND windows[], int width, int height)
 
 	m_deviceResources->CreateWindowSizeDependentResources();
 
-
 	CreateWindowSizeDependentResources();
-
-	// TODO: Change the timer settings if you want something other than the default variable timestep mode.
-	// e.g. for 60 FPS fixed timestep update logic, call:
 	
 	m_timer.SetFixedTimeStep(true);
 	m_timer.SetTargetElapsedSeconds(rate);
-	
+
+	for (int i = 0; i < m_numberOfWindows; i++)
+	{
+		m_deviceResources->GoFullscreen(i);
+	}
 }
 
 #pragma region Frame Update
@@ -88,6 +88,17 @@ void Game::OnSpaceKeyDown()
 	Prerender();
 	m_imageSetIndex = (m_imageSetIndex + 1) % m_files.size();
 	getImagesAsTextures(m_textures);
+}
+
+
+void Game::OnEscapeKeyDown()
+{
+	for (int i = 0; i < m_numberOfWindows; i++)
+	{
+		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
+	}
+
+	exit(0);
 }
 
 
@@ -255,12 +266,19 @@ void Game::GetDefaultSize(int& width, int& height) const
 void Game::CreateDeviceDependentResources()
 {
 	auto device = m_deviceResources->GetD3DDevice();
-	cv::directx::ocl::initializeContextFromD3D11Device(device);
+
+	try {
+		cv::directx::ocl::initializeContextFromD3D11Device(device);
+	} catch (cv::Exception& e)
+	{
+		auto msg = e.msg;
+		throw e;
+	}
 
 
 	// TODO: Initialize device dependent objects here (independent of window size).
 
-	std::fill(m_flickerFrameFlag, m_flickerFrameFlag + m_numberOfWindows, true);
+	//std::fill(m_flickerFrameFlag, m_flickerFrameFlag + m_numberOfWindows, true);
 
 
 	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(m_deviceResources->GetD3DDeviceContext());
@@ -270,9 +288,9 @@ void Game::CreateDeviceDependentResources()
 		m_toneMap[i] = std::make_unique<DirectX::ToneMapPostProcess>(device);
 
 		m_toneMap[i]->SetOperator(DirectX::ToneMapPostProcess::None);
-		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Rec2020);
+		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Scaled);
 
-		m_toneMap[i]->SetST2084Parameter(10000);
+		m_toneMap[i]->SetST2084Parameter(64);
 	}
 
 	getImagesAsTextures(m_textures);
@@ -347,6 +365,7 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 		catch (cv::Exception& e)
 		{
 			auto msg = e.err;
+			throw cv::Exception();
 		}
 
 		if (textures[i] == nullptr)

@@ -178,9 +178,6 @@
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="StepTimer.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\..\opencv\build\x64\vc15\bin\opencv_world410d.dll" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -44,13 +44,7 @@ namespace
 };
 
 // Constructor for DeviceResources.
-DX::DeviceResources::DeviceResources(
-	int numWindows,
-	DXGI_FORMAT backBufferFormat,
-	DXGI_FORMAT depthBufferFormat,
-	UINT backBufferCount,
-	D3D_FEATURE_LEVEL minFeatureLevel,
-	unsigned int flags) noexcept :
+DX::DeviceResources::DeviceResources(int numWindows, DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, unsigned int flags) noexcept :
 	m_screenViewport{},
 	m_backBufferFormat(backBufferFormat),
 	m_depthBufferFormat(depthBufferFormat),
@@ -474,7 +468,7 @@ void DX::DeviceResources::ThreadPresent()
 // CleanFrame the contents of the swap chain to the screen.
 void DX::DeviceResources::CleanFrame(int i)
 {
-	//auto hr = m_swapChain[i]->CleanFrame(1, 0);
+	//auto hr = m_swapChain[i]->Present(1, 0);
 	
 
 	// Discard the contents of the render target.
@@ -506,6 +500,30 @@ void DX::DeviceResources::CleanFrame(int i)
 			CreateFactory();
 		}
 	}
+}
+
+/**
+ * Tells the ith window to go fullscreen on the ith output (monitor).
+ */
+void DX::DeviceResources::GoFullscreen(int i)
+{
+	ComPtr<IDXGIAdapter1> adapter;
+	GetHardwareAdapter(adapter.GetAddressOf());
+	
+	ComPtr<IDXGIOutput> output;
+	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
+	ThrowIfFailed(hr);
+
+	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
+
+	if  (FAILED(hr))
+	{
+		ThrowIfFailed(hr);
+		exit(1);
+	}
+	
+	UpdateColorSpace(i);
+	CreateWindowSizeDependentResources();
 }
 
 void DX::DeviceResources::CreateFactory()

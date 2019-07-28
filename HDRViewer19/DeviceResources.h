@@ -79,6 +79,8 @@ namespace DX
 			m_d3dAnnotation->SetMarker(name);
 		}
 
+		void GoFullscreen(int i);
+
 		Microsoft::WRL::ComPtr<ID3D11Device1>               m_d3dDevice;
 
 

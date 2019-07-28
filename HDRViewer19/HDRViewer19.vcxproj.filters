@@ -56,7 +56,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\..\..\..\opencv\build\x64\vc15\bin\opencv_world410d.dll" />
-  </ItemGroup>
 </Project>

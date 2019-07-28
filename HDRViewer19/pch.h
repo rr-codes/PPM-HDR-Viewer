@@ -55,6 +55,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/directx.hpp>
 
+#include "Utils.h"
+
 #include <comdef.h>
 
 #include <stdio.h>

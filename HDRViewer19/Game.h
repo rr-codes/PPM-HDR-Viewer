@@ -9,13 +9,14 @@
 #include "RenderTexture.h"
 #include "SpriteBatch.h"
 
+using string_ref = const std::string &;
 
 // A basic game implementation that creates a D3D11 device and
 // provides a game loop.
 class Game final : public DX::IDeviceNotify
 {
 public:
-	Game(const std::string& folderPath, int numWindows, bool flicker) noexcept(false);
+	Game(string_ref folderPath, string_ref configFilePath, bool flicker) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
@@ -28,7 +29,7 @@ public:
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
 	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
-	static std::vector<std::vector<std::string>> getFiles(const std::string& folder);
+	static matrix<std::string> getFiles(string_ref folder, string_ref configFile);
 
 	// Messages
 	void OnActivated();
@@ -70,8 +71,7 @@ private:
 	bool* m_flickerFrameFlag;
 	int m_imageSetIndex = 0;
 
-	int m_numberOfWindows = 1;
 	bool m_flickerEnable = false;
 
-	std::vector<std::vector<std::string>> m_files;
+	matrix<std::string> m_files;
 };

@@ -10,7 +10,8 @@
 #include <filesystem>
 
 HWND* windows;
-int numWindows = 0;
+
+using string_ref = const std::string &;
 
 namespace
 {
@@ -28,8 +29,10 @@ extern "C"
 
 bool argumentsAreValid(std::vector<std::string> arguments)
 {
-	const std::filesystem::path path(arguments.back());
-	return is_directory(path) && !arguments.empty();
+	const std::filesystem::path folder_path(arguments[arguments.size() - 2]);
+	const std::filesystem::path config_path(arguments[arguments.size() - 1]);
+
+	return is_directory(folder_path) && is_regular_file(config_path);
 }
 
 // Entry point
@@ -48,19 +51,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	MSG msg = {};
 
 	auto arguments = string::split(string::to_string(lpCmdLine));
-
-	auto shouldFlicker = false;
-	auto numWindows = 1;
-
-	if (vector::contains<std::string>(arguments, "-flicker"))
-	{
-		shouldFlicker = true;
-	}
-
-	if (vector::contains<std::string>(arguments, "-stereo"))
-	{
-		numWindows = 2;
-	}
+	auto shouldFlicker = vector::contains<std::string>(arguments, "-flicker");
 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
@@ -79,14 +70,18 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		if (result == 1) exit(1);
 	}
 
+	g_game = std::make_unique<Game>(
+		arguments[arguments.size() - 2], 
+		arguments[arguments.size() - 1], 
+		shouldFlicker
+	);
 
-	g_game = std::make_unique<Game>(arguments.back(), numWindows, shouldFlicker);
 	RECT rc;
 
-	windows = new HWND[numWindows];
+	windows = new HWND[NUMBER_OF_WINDOWS];
 
 
-	for (int i = 0; i < numWindows; i++) {
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 
 		// Register class and create window
 		{
@@ -173,7 +168,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
 	auto wndIndex = 0;
-	for (int i = 0; i < numWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		if (windows[i] == hWnd) wndIndex = i;
 	}

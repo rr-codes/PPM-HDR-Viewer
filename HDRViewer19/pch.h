@@ -61,6 +61,12 @@
 
 #include <stdio.h>
 
+#define NUMBER_OF_WINDOWS 2
+
+// convenience typealiases
+
+template <typename T>
+using matrix = std::vector<std::vector<T>>;
 
 #ifdef _DEBUG
 #include <dxgidebug.h>

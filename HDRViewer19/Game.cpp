@@ -6,6 +6,8 @@
 #include "Game.h"
 #include <synchapi.h>
 #include <filesystem>
+#include <iostream>
+#include <fstream>
 
 extern void ExitGame();
 
@@ -18,14 +20,13 @@ using Microsoft::WRL::ComPtr;
 static float rate = 1.0f;
 
 
-Game::Game(const std::string& folderPath, int numWindows, bool flicker) noexcept(false)
+Game::Game(string_ref folderPath, string_ref configFilePath, bool flicker) noexcept(false)
 {
-	m_files = getFiles(folderPath);
+	m_files = getFiles(folderPath, configFilePath);
 	m_flickerEnable = flicker;
-	m_numberOfWindows = numWindows;
 
 	m_deviceResources = std::make_unique<DX::DeviceResources>(
-		m_numberOfWindows, 
+		NUMBER_OF_WINDOWS, 
 		DXGI_FORMAT_R10G10B10A2_UNORM,
 		DXGI_FORMAT_D32_FLOAT, 
 		2, 
@@ -35,25 +36,25 @@ Game::Game(const std::string& folderPath, int numWindows, bool flicker) noexcept
 
 	m_deviceResources->RegisterDeviceNotify(this);
 
-	m_hdrScene	= new std::unique_ptr<DX::RenderTexture>[m_numberOfWindows];
-	m_toneMap	= new std::unique_ptr<DirectX::ToneMapPostProcess>[m_numberOfWindows];
+	m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
+	m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
 
-	m_textures				= new ComPtr<ID3D11Texture2D>[2 * m_numberOfWindows];
-	m_shaderResourceViews	= new ComPtr<ID3D11ShaderResourceView>[2 * m_numberOfWindows];
+	m_textures = new ComPtr<ID3D11Texture2D>[2 * NUMBER_OF_WINDOWS];
+	m_shaderResourceViews = new ComPtr<ID3D11ShaderResourceView>[2 * NUMBER_OF_WINDOWS];
 
-	for (int i = 0; i < m_numberOfWindows; i++) {
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 		m_hdrScene[i] = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
-}
+} 
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND windows[], int width, int height)
 {
-	m_flickerFrameFlag = new bool[m_numberOfWindows];
-	m_textures = new ComPtr<ID3D11Texture2D>[m_numberOfWindows];
+	m_flickerFrameFlag = new bool[NUMBER_OF_WINDOWS];
+	m_textures = new ComPtr<ID3D11Texture2D>[NUMBER_OF_WINDOWS];
 
-	for (int i = 0; i < m_numberOfWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->SetWindow(i, windows[i], width, height);
 	}
@@ -68,7 +69,7 @@ void Game::Initialize(HWND windows[], int width, int height)
 	m_timer.SetFixedTimeStep(true);
 	m_timer.SetTargetElapsedSeconds(rate);
 
-	for (int i = 0; i < m_numberOfWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->GoFullscreen(i);
 	}
@@ -99,7 +100,7 @@ void Game::OnArrowKeyDown(WPARAM key)
 
 void Game::OnEscapeKeyDown()
 {
-	for (int i = 0; i < m_numberOfWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
 	}
@@ -111,27 +112,24 @@ void Game::OnEscapeKeyDown()
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
 {
-	for (int i = 0; i < m_numberOfWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		Render(i);
 	}
 
 	m_deviceResources->ThreadPresent();
 
-	for (int i = 0; i < m_numberOfWindows; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->CleanFrame(i);
 	}
-
-	// TODO: Add your game logic here.
 }
 #pragma endregion
 
 
-
 void Game::Prerender()
 {
-	for (int i = 0; i < m_numberOfWindows * 2; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS * 2; i++)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC desc2 = { };
 		desc2.Format = DXGI_FORMAT_R16G16B16A16_UNORM;
@@ -144,7 +142,6 @@ void Game::Prerender()
 			m_shaderResourceViews[i].GetAddressOf()
 		);
 	}
-
 }
 
 
@@ -238,8 +235,6 @@ void Game::OnSuspending()
 void Game::OnResuming()
 {
 	m_timer.ResetElapsedTime();
-
-	// TODO: Game is being power-resumed (or returning from minimize).
 }
  
 void Game::OnWindowMoved(int i)
@@ -254,14 +249,11 @@ void Game::OnWindowSizeChanged(int i, int width, int height)
 		return;
 
 	CreateWindowSizeDependentResources();
-
-	// TODO: Game window is being resized.
 }
 
 // Properties
 void Game::GetDefaultSize(int& width, int& height) const
 {
-	// TODO: Change to desired default window size (note minimum size is 320x200).
 	width = 800;
 	height = 600;
 }
@@ -281,15 +273,9 @@ void Game::CreateDeviceDependentResources()
 		throw e;
 	}
 
-
-	// TODO: Initialize device dependent objects here (independent of window size).
-
-	//std::fill(m_flickerFrameFlag, m_flickerFrameFlag + m_numberOfWindows, true);
-
-
 	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(m_deviceResources->GetD3DDeviceContext());
 
-	for (int i = 0; i < m_numberOfWindows; i++) {
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 		m_hdrScene[i]->SetDevice(device);
 		m_toneMap[i] = std::make_unique<DirectX::ToneMapPostProcess>(device);
 
@@ -307,7 +293,7 @@ void Game::CreateDeviceDependentResources()
 void Game::CreateWindowSizeDependentResources()
 {
 	auto size = m_deviceResources->GetOutputSize();
-	for (int i = 0; i < m_numberOfWindows; i++) {
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 		m_hdrScene[i]->SetWindow(size);
 
 		m_toneMap[i]->SetHDRSourceTexture(m_hdrScene[i]->GetShaderResourceView());
@@ -316,10 +302,7 @@ void Game::CreateWindowSizeDependentResources()
 
 void Game::OnDeviceLost()
 {
-	// TODO: Add Direct3D resource cleanup here.
-
-
-	for (int i = 0; i < m_numberOfWindows; i++) {
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 		m_hdrScene[i]->ReleaseDevice();
 
 		m_toneMap[i].reset();
@@ -341,15 +324,13 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 {
 	auto filenames = m_files[m_imageSetIndex];
 
-	for (int i = 0; i < m_numberOfWindows * 2; i++)
+	for (int i = 0; i < NUMBER_OF_WINDOWS * 2; i++)
 	{
 		auto matrixoriginal = cv::imread(filenames[i], cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH);
 		cv::Mat matrix(matrixoriginal.size(), CV_MAKE_TYPE(matrixoriginal.depth(), 4));
 
 		int conversion[] = { 2, 0, 1, 1, 0, 2, -1, 3 };
 		cv::mixChannels(&matrixoriginal, 1, &matrix, 1, conversion, 4);
-
-		//cv::imshow("w", matrix);
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = matrix.cols;
@@ -382,43 +363,28 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 
 }
 
-std::vector<std::vector<std::string>> Game::getFiles(const std::string& folder)
+matrix<std::string> Game::getFiles(string_ref folder, string_ref configFile)
 {
-	std::vector<std::vector<std::string>> folder_vector;
+	matrix<std::string> folder_vector;
+	std::ifstream config(configFile);
 
-	const auto permutations = 4;
+	std::string line;
 
-	int index = 0;
-	int matrixIndex = -1;
-
-	for (const auto& file : std::filesystem::directory_iterator(folder))
+	while (std::getline(config, line))
 	{
-		if (file.path().extension().generic_string() != ".ppm") continue;
+		auto path = folder + "/" + line;
 
-		if (index % permutations == 0)
-		{
-			std::vector<std::string> file_vector;
-			folder_vector.push_back(file_vector);
-			matrixIndex++;
-		}
+		std::vector<std::string> paths = { 
+			path + "_L_dec.ppm", 
+			path + "_L.ppm",
+			path + "_R_dec.ppm", 
+			path + "_R.ppm" 
+		};
 
-		auto path = file.path().generic_string();
-		folder_vector[matrixIndex].push_back(path);
-
-		index++;
+		folder_vector.push_back(paths);
 	}
 
-	if ((index) % 4 != 0)
-	{
-		const auto result = MessageBox(
-			nullptr, 
-			L"Not all images have four permutations. Please remove such images, or add permutations. Exiting...", 
-			L"Error", 
-			0
-		);
-
-		if (result == 1) exit(1);
-	}
+	config.close();
 
 	return folder_vector;
 }

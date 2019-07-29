@@ -16,6 +16,8 @@ namespace vector
 
 namespace string
 {
+	using string_ref = const std::string &;
+
 	static std::string to_string(wchar_t* ws)
 	{
 		std::wstring s(ws);
@@ -24,7 +26,7 @@ namespace string
 		return asString;
 	}
 
-	static std::vector<std::string> split(const std::string& str)
+	static std::vector<std::string> split(string_ref str)
 	{
 		const std::string delimiter = " ";
 
@@ -38,7 +40,7 @@ namespace string
 		return arguments;
 	}
 
-	static bool contains(const std::string& str, const std::string& substr)
+	static bool contains(string_ref str, string_ref substr)
 	{
 		return str.find(substr) != std::string::npos;
 	}

@@ -29,7 +29,10 @@ extern "C"
 
 bool argumentsAreValid(std::vector<std::string> arguments)
 {
-	return true;
+	const std::filesystem::path folder_path(arguments[arguments.size() - 2]);
+	const std::filesystem::path config_path(arguments[arguments.size() - 1]);
+
+	return is_directory(folder_path) && is_regular_file(config_path);
 }
 
 // Entry point
@@ -58,19 +61,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		std::string str = "Error parsing arguments.";
 
 		const auto result = MessageBox(
-			nullptr, 
-			std::wstring(str.begin(), str.end()).c_str(), 
-			L"Error", 
+			nullptr,
+			std::wstring(str.begin(), str.end()).c_str(),
+			L"Error",
 			0
 		);
 
 		if (result == 1) exit(1);
 	}
 
-	g_game = std::make_unique<Game>( 
-		arguments.back(), 
+	g_game = std::make_unique<Game>(
+		arguments[arguments.size() - 2],
+		arguments[arguments.size() - 1],
 		shouldFlicker
-	);
+		);
 
 	RECT rc;
 
@@ -127,27 +131,27 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			GetClientRect(windows[i], &rc);
 		}
 	}
-	
+
 
 	g_game->Initialize(windows, rc.right - rc.left, rc.bottom - rc.top);
 
-		// Main message loop
-		while (WM_QUIT != msg.message)
+	// Main message loop
+	while (WM_QUIT != msg.message)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			else
-			{
-				g_game->Tick();
-			}
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
+		else
+		{
+			g_game->Tick();
+		}
+	}
 
-		g_game.reset();
+	g_game.reset();
 
-		CoUninitialize();
+	CoUninitialize();
 
 	return static_cast<int>(msg.wParam);
 }

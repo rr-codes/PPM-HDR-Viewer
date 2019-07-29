@@ -421,7 +421,7 @@ void DX::DeviceResources::HandleDeviceLost()
 	m_d3dDepthStencilView.Reset();
 	m_depthStencil.Reset();
 
-	
+
 
 	for (int i = 0; i < m_numWindows; i++)
 	{
@@ -469,7 +469,7 @@ void DX::DeviceResources::ThreadPresent()
 void DX::DeviceResources::CleanFrame(int i)
 {
 	//auto hr = m_swapChain[i]->Present(1, 0);
-	
+
 
 	// Discard the contents of the render target.
 	// This is a valid operation only when the existing contents will be entirely
@@ -509,9 +509,9 @@ void DX::DeviceResources::GoFullscreen(int i)
 {
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
-	
+
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(1 - i, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
 #ifdef _DEBUG
@@ -521,16 +521,16 @@ void DX::DeviceResources::GoFullscreen(int i)
 	Debug::log(desc.DeviceName);
 #endif
 
-	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
+	/*hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
-	if  (FAILED(hr))
+	if (FAILED(hr))
 	{
 		ThrowIfFailed(hr);
 		exit(1);
 	}
-	
-	UpdateColorSpace(1 - i);
-	CreateWindowSizeDependentResources();
+
+	UpdateColorSpace(i);
+	CreateWindowSizeDependentResources();*/
 }
 
 void DX::DeviceResources::CreateFactory()
@@ -640,26 +640,26 @@ void DX::DeviceResources::UpdateColorSpace(int i)
 	bool isDisplayHDR10 = false;
 
 #if defined(NTDDI_WIN10_RS2)
-		if (m_swapChain[i])
+	if (m_swapChain[i])
+	{
+		ComPtr<IDXGIOutput> output;
+		if (SUCCEEDED(m_swapChain[i]->GetContainingOutput(output.GetAddressOf())))
 		{
-			ComPtr<IDXGIOutput> output;
-			if (SUCCEEDED(m_swapChain[i]->GetContainingOutput(output.GetAddressOf())))
+			ComPtr<IDXGIOutput6> output6;
+			if (SUCCEEDED(output.As(&output6)))
 			{
-				ComPtr<IDXGIOutput6> output6;
-				if (SUCCEEDED(output.As(&output6)))
-				{
-					DXGI_OUTPUT_DESC1 desc;
-					ThrowIfFailed(output6->GetDesc1(&desc));
+				DXGI_OUTPUT_DESC1 desc;
+				ThrowIfFailed(output6->GetDesc1(&desc));
 
-					if (desc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)
-					{
-						// Display output is HDR10.
-						isDisplayHDR10 = true;
-					}
+				if (desc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020)
+				{
+					// Display output is HDR10.
+					isDisplayHDR10 = true;
 				}
 			}
 		}
-	
+	}
+
 #endif
 
 	m_colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;

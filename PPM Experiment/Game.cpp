@@ -20,19 +20,19 @@ using Microsoft::WRL::ComPtr;
 static float rate = 1.0f;
 
 
-Game::Game(string_ref folderPath, bool flicker) noexcept(false)
+Game::Game(string_ref folderPath, string_ref configFilePath, bool flicker) noexcept(false)
 {
-	m_files = getFiles(folderPath);
+	m_files = getFiles(folderPath, configFilePath);
 	m_flickerEnable = flicker;
 
 	m_deviceResources = std::make_unique<DX::DeviceResources>(
-		NUMBER_OF_WINDOWS, 
+		NUMBER_OF_WINDOWS,
 		DXGI_FORMAT_R10G10B10A2_UNORM,
-		DXGI_FORMAT_D32_FLOAT, 
-		2, 
-		D3D_FEATURE_LEVEL_10_0, 
+		DXGI_FORMAT_D32_FLOAT,
+		2,
+		D3D_FEATURE_LEVEL_10_0,
 		DX::DeviceResources::c_EnableHDR
-	);
+		);
 
 	m_deviceResources->RegisterDeviceNotify(this);
 
@@ -46,7 +46,7 @@ Game::Game(string_ref folderPath, bool flicker) noexcept(false)
 		m_hdrScene[i] = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
-} 
+}
 
 // Initialize the Direct3D resources required to run.
 void Game::Initialize(HWND windows[], int width, int height)
@@ -65,9 +65,14 @@ void Game::Initialize(HWND windows[], int width, int height)
 	m_deviceResources->CreateWindowSizeDependentResources();
 
 	CreateWindowSizeDependentResources();
-	
+
+	m_gamePad = std::make_unique<DirectX::GamePad>();
+
 	m_timer.SetFixedTimeStep(true);
 	m_timer.SetTargetElapsedSeconds(rate);
+
+	m_frameTimer.SetFixedTimeStep(true);
+	m_frameTimer.SetTargetElapsedSeconds(1.0f / 60.0f);
 
 	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
@@ -79,6 +84,14 @@ void Game::Initialize(HWND windows[], int width, int height)
 // Executes the basic game loop.
 void Game::Tick()
 {
+	m_frameTimer.Tick([&]() {
+		auto state = m_gamePad->GetState(0);
+		if (state.IsConnected())
+		{
+			OnGamePadButton(state);
+		}
+	});
+
 	m_timer.Tick([&]() { Update(m_timer); });
 }
 
@@ -108,10 +121,25 @@ void Game::OnEscapeKeyDown()
 	exit(0);
 }
 
+void Game::OnGamePadButton(const DirectX::GamePad::State state)
+{
+	m_buttons.Update(state);
+	if (m_buttons.rightTrigger == DirectX::GamePad::ButtonStateTracker::PRESSED)
+	{
+		Debug::log(L"right pressed");
+	}
+	else if (m_buttons.leftTrigger == DirectX::GamePad::ButtonStateTracker::PRESSED)
+	{
+		m_gamePad->SetVibration(0, 1, 0);
+	}
+}
+
 
 // Updates the world.
 void Game::Update(DX::StepTimer const& timer)
 {
+	
+
 	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		Render(i);
@@ -220,23 +248,29 @@ void Game::Clear(int i)
 void Game::OnActivated()
 {
 	// TODO: Game is becoming active window.
+	m_gamePad->Resume();
+	m_buttons.Reset();
 }
 
 void Game::OnDeactivated()
 {
 	// TODO: Game is becoming background window.
+	m_gamePad->Suspend();
 }
 
 void Game::OnSuspending()
 {
 	// TODO: Game is being power-suspended (or minimized).
+	m_gamePad->Suspend();
 }
 
 void Game::OnResuming()
 {
 	m_timer.ResetElapsedTime();
+	m_gamePad->Resume();
+	m_buttons.Reset();
 }
- 
+
 void Game::OnWindowMoved(int i)
 {
 	auto r = m_deviceResources->GetOutputSize();
@@ -267,7 +301,8 @@ void Game::CreateDeviceDependentResources()
 
 	try {
 		cv::directx::ocl::initializeContextFromD3D11Device(device);
-	} catch (cv::Exception& e)
+	}
+	catch (cv::Exception& e)
 	{
 		auto msg = e.msg;
 		throw e;
@@ -282,7 +317,7 @@ void Game::CreateDeviceDependentResources()
 		m_toneMap[i]->SetOperator(DirectX::ToneMapPostProcess::None);
 		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Scaled);
 
-		m_toneMap[i]->SetST2084Parameter(80);
+		m_toneMap[i]->SetST2084Parameter(64);
 	}
 
 	getImagesAsTextures(m_textures);
@@ -365,35 +400,28 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 
 }
 
-matrix<std::string> Game::getFiles(string_ref folder)
+matrix<std::string> Game::getFiles(string_ref folder, string_ref configFile)
 {
 	matrix<std::string> folder_vector;
-	const auto permutations = 4;
+	std::ifstream config(configFile);
 
-	int index = 0;
-	int matrixIndex = -1;
+	std::string line;
 
-	for (const auto& file : std::filesystem::directory_iterator(folder))
+	while (std::getline(config, line))
 	{
-		if (file.path().extension().generic_string() != ".ppm") continue;
+		auto path = folder + "/" + line;
 
-		if (index % permutations == 0)
-		{
-			std::vector<std::string> file_vector;
-			folder_vector.push_back(file_vector);
-			matrixIndex++;
-		}
+		std::vector<std::string> paths = {
+			path + "_L_dec.ppm",
+			path + "_L.ppm",
+			path + "_R_dec.ppm",
+			path + "_R.ppm"
+		};
 
-		auto path = file.path().generic_string();
-		folder_vector[matrixIndex].push_back(path);
-
-		index++;
-
-#ifdef IMAGE_TEST
-		folder_vector[matrixIndex].push_back(path);
-		index++;
-#endif
+		folder_vector.push_back(paths);
 	}
+
+	config.close();
 
 	return folder_vector;
 }

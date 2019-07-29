@@ -8,6 +8,7 @@
 #include "StepTimer.h"
 #include "RenderTexture.h"
 #include "SpriteBatch.h"
+#include "GamePad.h"
 
 using string_ref = const std::string &;
 
@@ -16,7 +17,7 @@ using string_ref = const std::string &;
 class Game final : public DX::IDeviceNotify
 {
 public:
-	Game(string_ref folderPath, bool flicker) noexcept(false);
+	Game(string_ref folderPath, string_ref configFilePath, bool flicker) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
@@ -24,12 +25,13 @@ public:
 	void Tick();
 	void OnArrowKeyDown(WPARAM key);
 	void OnEscapeKeyDown();
+	void OnGamePadButton(DirectX::GamePad::State state);
 
 	// IDeviceNotify
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
 	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
-	matrix<std::string> getFiles(string_ref folder);
+	static matrix<std::string> getFiles(string_ref folder, string_ref configFile);
 
 	// Messages
 	void OnActivated();
@@ -59,6 +61,7 @@ private:
 
 	// Rendering loop timer.
 	DX::StepTimer m_timer;
+	DX::StepTimer m_frameTimer;
 
 	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
@@ -74,4 +77,7 @@ private:
 	bool m_flickerEnable = false;
 
 	matrix<std::string> m_files;
+
+	std::unique_ptr<DirectX::GamePad>  m_gamePad;
+	DirectX::GamePad::ButtonStateTracker m_buttons;
 };

@@ -60,9 +60,9 @@
 #include <comdef.h>
 
 #include <stdio.h>
+#include <vector>
 
 #define NUMBER_OF_WINDOWS 2
-#define IMAGE_TEST true
 
 // convenience typealiases
 

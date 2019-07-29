@@ -14,8 +14,6 @@ using Microsoft::WRL::ComPtr;
 /**
  * Sets the rate at which to alternate between the images (i.e, there are `rate` seconds between the original and decompressed)
  * For stereo, every `rate` seconds, the two windows' frames are rendered, one before the other, and then they are presented, one before the other
- *  
- * TODO: Use multithreading to resolve the asynchronous issue. Specifically, given 1 device and 1 adapter, with 2 outputs (1 swapchain per window per output).  
  */
 static float rate = 1.0f;
 
@@ -83,11 +81,19 @@ void Game::Tick()
 	m_timer.Tick([&]() { Update(m_timer); });
 }
 
-void Game::OnSpaceKeyDown()
+void Game::OnArrowKeyDown(WPARAM key)
 {
-	Prerender();
-	m_imageSetIndex = (m_imageSetIndex + 1) % m_files.size();
+	if (key == VK_LEFT)
+	{
+		m_imageSetIndex = (m_imageSetIndex == 0) ? m_files.size() - 1 : m_imageSetIndex - 1;
+	}
+	else if (key == VK_RIGHT)
+	{
+		m_imageSetIndex = (m_imageSetIndex + 1) % m_files.size();
+	}
+
 	getImagesAsTextures(m_textures);
+	Prerender();
 }
 
 

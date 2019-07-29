@@ -195,9 +195,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KEYDOWN:
-		if (game && wParam == VK_SPACE)
+		if (game && (wParam == VK_LEFT || wParam == VK_RIGHT))
 		{
-			game->OnSpaceKeyDown();
+			game->OnArrowKeyDown(wParam);
 		}
 		if (game && wParam == VK_ESCAPE)
 		{
@@ -298,35 +298,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SYSKEYDOWN:
-		if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
-		{
-			// Implements the classic ALT+ENTER fullscreen toggle
-			if (s_fullscreen)
-			{
-				SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-				SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
+		//if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
+		//{
+		//	// Implements the classic ALT+ENTER fullscreen toggle
+		//	if (s_fullscreen)
+		//	{
+		//		SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+		//		SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
 
-				int width = 800;
-				int height = 600;
-				if (game)
-					game->GetDefaultSize(width, height);
+		//		int width = 800;
+		//		int height = 600;
+		//		if (game)
+		//			game->GetDefaultSize(width, height);
 
-				ShowWindow(hWnd, SW_SHOWNORMAL);
+		//		ShowWindow(hWnd, SW_SHOWNORMAL);
 
-				SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			}
-			else
-			{
-				SetWindowLongPtr(hWnd, GWL_STYLE, 0);
-				SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
+		//		SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		//	}
+		//	else
+		//	{
+		//		SetWindowLongPtr(hWnd, GWL_STYLE, 0);
+		//		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
 
-				SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		//		SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
-				ShowWindow(hWnd, SW_SHOWMAXIMIZED);
-			}
+		//		ShowWindow(hWnd, SW_SHOWMAXIMIZED);
+		//	}
 
-			s_fullscreen = !s_fullscreen;
-		}
+		//	s_fullscreen = !s_fullscreen;
+		//}
 		break;
 
 	case WM_MENUCHAR:

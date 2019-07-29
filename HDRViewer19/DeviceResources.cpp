@@ -514,6 +514,13 @@ void DX::DeviceResources::GoFullscreen(int i)
 	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
+#ifdef _DEBUG
+	DXGI_OUTPUT_DESC desc;
+	output.Get()->GetDesc(&desc);
+
+	Debug::log(desc.DeviceName);
+#endif
+
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
 	if  (FAILED(hr))

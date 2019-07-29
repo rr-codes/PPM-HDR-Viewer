@@ -21,7 +21,7 @@ public:
 	void Initialize(HWND windows[], int width, int height);
 	// Basic game loop
 	void Tick();
-	void OnSpaceKeyDown();
+	void OnArrowKeyDown(WPARAM key);
 	void OnEscapeKeyDown();
 
 	// IDeviceNotify

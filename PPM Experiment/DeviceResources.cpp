@@ -507,11 +507,14 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
+	// make the 2nd output have he 1st swapchain and vice versa to have proper stereo
+	int actual = 1 - i;
+
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(actual, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
 #ifdef _DEBUG
@@ -521,7 +524,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 	Debug::log(desc.DeviceName);
 #endif
 
-	/*hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
+	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
 	if (FAILED(hr))
 	{
@@ -529,8 +532,8 @@ void DX::DeviceResources::GoFullscreen(int i)
 		exit(1);
 	}
 
-	UpdateColorSpace(i);
-	CreateWindowSizeDependentResources();*/
+	UpdateColorSpace(actual);
+	CreateWindowSizeDependentResources();
 }
 
 void DX::DeviceResources::CreateFactory()

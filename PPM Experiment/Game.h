@@ -9,6 +9,7 @@
 #include "RenderTexture.h"
 #include "SpriteBatch.h"
 #include "GamePad.h"
+#include "Participant.h"
 
 using string_ref = const std::string &;
 
@@ -17,7 +18,7 @@ using string_ref = const std::string &;
 class Game final : public DX::IDeviceNotify
 {
 public:
-	Game(string_ref folderPath, string_ref configFilePath, bool flicker) noexcept(false);
+	Game(const Experiment::Trial& trial) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
@@ -31,7 +32,7 @@ public:
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
 	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
-	static matrix<std::string> getFiles(string_ref folder, string_ref configFile);
+	static matrix<std::filesystem::path> getFiles(string_ref folder, const std::vector<Experiment::Question>& questions);
 
 	// Messages
 	void OnActivated();
@@ -45,6 +46,7 @@ public:
 	void GetDefaultSize(int& width, int& height) const;
 
 	void Prerender();
+	std::pair<int, int> GetIndicesForFrame(int windowIndex);
 	void Render(int i);
 	void Clear(int i);
 
@@ -74,10 +76,14 @@ private:
 	bool* m_flickerFrameFlag;
 	int m_imageSetIndex = 0;
 
-	bool m_flickerEnable = false;
-
-	matrix<std::string> m_files;
+	matrix<std::filesystem::path> m_files;
 
 	std::unique_ptr<DirectX::GamePad>  m_gamePad;
 	DirectX::GamePad::ButtonStateTracker m_buttons;
+
+	Experiment::Trial m_trial;
+
+	std::chrono::time_point<std::chrono::system_clock> last_time;
+
+	DirectX::XMFLOAT2 m_leftImagePosition, m_rightImagePosition;
 };

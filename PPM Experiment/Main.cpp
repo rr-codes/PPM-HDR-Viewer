@@ -27,14 +27,6 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-bool argumentsAreValid(std::vector<std::string> arguments)
-{
-	const std::filesystem::path folder_path(arguments[arguments.size() - 2]);
-	const std::filesystem::path config_path(arguments[arguments.size() - 1]);
-
-	return is_directory(folder_path) && is_regular_file(config_path);
-}
-
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
@@ -50,31 +42,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	MSG msg = {};
 
-	auto arguments = string::split(string::to_string(lpCmdLine));
-	auto shouldFlicker = vector::contains<std::string>(arguments, "-flicker");
-
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	if (!argumentsAreValid(arguments))
-	{
-		std::string str = "Error parsing arguments.";
-
-		const auto result = MessageBox(
-			nullptr,
-			std::wstring(str.begin(), str.end()).c_str(),
-			L"Error",
-			0
-		);
-
-		if (result == 1) exit(1);
-	}
-
-	g_game = std::make_unique<Game>(
-		arguments[arguments.size() - 2],
-		arguments[arguments.size() - 1],
-		shouldFlicker
-		);
+	auto trial = Experiment::CreateTrial(string::to_string(lpCmdLine));
+	g_game = std::make_unique<Game>(trial);
 
 	RECT rc;
 
@@ -290,38 +262,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		break;
-
-	case WM_SYSKEYDOWN:
-		//if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
-		//{
-		//	// Implements the classic ALT+ENTER fullscreen toggle
-		//	if (s_fullscreen)
-		//	{
-		//		SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-		//		SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
-
-		//		int width = 800;
-		//		int height = 600;
-		//		if (game)
-		//			game->GetDefaultSize(width, height);
-
-		//		ShowWindow(hWnd, SW_SHOWNORMAL);
-
-		//		SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-		//	}
-		//	else
-		//	{
-		//		SetWindowLongPtr(hWnd, GWL_STYLE, 0);
-		//		SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-		//		SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
-
-		//		ShowWindow(hWnd, SW_SHOWMAXIMIZED);
-		//	}
-
-		//	s_fullscreen = !s_fullscreen;
-		//}
 		break;
 
 	case WM_MENUCHAR:

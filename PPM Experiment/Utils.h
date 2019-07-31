@@ -14,6 +14,7 @@ namespace vector
 	}
 }
 
+
 namespace string
 {
 	using string_ref = const std::string &;
@@ -28,8 +29,6 @@ namespace string
 
 	static std::vector<std::string> split(string_ref str)
 	{
-		const std::string delimiter = " ";
-
 		auto iss = std::istringstream(str);
 
 		std::vector<std::string> arguments(
@@ -50,11 +49,16 @@ namespace Debug
 {
 	static void log(wchar_t const* format, ...)
 	{
-#ifdef _DEBUG
 		wchar_t buff[256] = {};
 		swprintf_s(buff, format);
 		OutputDebugStringW(buff);
-#endif
+	}
+
+	static void log(char const* format, ...)
+	{
+		char buff[256] = {};
+		sprintf_s(buff, 256, format);
+		OutputDebugStringA(buff);
 	}
 }
 

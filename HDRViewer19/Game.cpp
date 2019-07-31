@@ -279,10 +279,7 @@ void Game::CreateDeviceDependentResources()
 		m_hdrScene[i]->SetDevice(device);
 		m_toneMap[i] = std::make_unique<DirectX::ToneMapPostProcess>(device);
 
-		m_toneMap[i]->SetOperator(DirectX::ToneMapPostProcess::None);
-		m_toneMap[i]->SetTransferFunction(DirectX::ToneMapPostProcess::Scaled);
-
-		m_toneMap[i]->SetST2084Parameter(80);
+		m_toneMap[i]->SetST2084Parameter(64);
 	}
 
 	getImagesAsTextures(m_textures);

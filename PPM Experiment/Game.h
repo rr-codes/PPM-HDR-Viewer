@@ -10,6 +10,7 @@
 #include "SpriteBatch.h"
 #include "GamePad.h"
 #include "Participant.h"
+#include "SimpleMath.h"
 
 using string_ref = const std::string &;
 
@@ -46,7 +47,7 @@ public:
 	void GetDefaultSize(int& width, int& height) const;
 
 	void Prerender();
-	std::pair<int, int> GetIndicesForFrame(int windowIndex);
+	Utils::Duo<int> GetIndicesForCurrentFrame(int windowIndex);
 	void Render(int i);
 	void Clear(int i);
 
@@ -85,5 +86,5 @@ private:
 
 	std::chrono::time_point<std::chrono::system_clock> last_time;
 
-	DirectX::XMFLOAT2 m_leftImagePosition, m_rightImagePosition;
+	Utils::Duo<DirectX::SimpleMath::Vector2> m_imagePositions;
 };

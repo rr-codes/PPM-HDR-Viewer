@@ -14,6 +14,16 @@ namespace vector
 	}
 }
 
+namespace Utils
+{
+	/// A pair of one type of element representing data associated with sidedness
+	template <typename T>
+	struct Duo
+	{
+		T left, right;
+	};
+}
+
 
 namespace string
 {
@@ -47,18 +57,28 @@ namespace string
 
 namespace Debug
 {
-	static void log(wchar_t const* format, ...)
+	static void log(const char* format, ...)
 	{
-		wchar_t buff[256] = {};
-		swprintf_s(buff, format);
-		OutputDebugStringW(buff);
+		char s_printf_buf[1024];
+		va_list args;
+		va_start(args, format);
+
+		_vsnprintf_s(s_printf_buf, sizeof(s_printf_buf), format, args);
+
+		va_end(args);
+		OutputDebugStringA(s_printf_buf);
 	}
 
-	static void log(char const* format, ...)
+	static void log(const wchar_t* format, ...)
 	{
-		char buff[256] = {};
-		sprintf_s(buff, 256, format);
-		OutputDebugStringA(buff);
+		wchar_t buf[1024];
+		va_list args;
+		va_start(args, format);
+
+		swprintf(buf, sizeof(buf), format, args);
+
+		va_end(args);
+		OutputDebugStringW(buf);
 	}
 }
 

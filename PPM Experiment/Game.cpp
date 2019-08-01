@@ -13,12 +13,6 @@ extern void ExitGame();
 
 using Microsoft::WRL::ComPtr;
 
-/**
- * Sets the rate at which to alternate between the images (i.e, there are `rate` seconds between the original and decompressed)
- * For stereo, every `rate` seconds, the two windows' frames are rendered, one before the other, and then they are presented, one before the other
- */
-
-
 Game::Game(const Experiment::Trial& trial) noexcept(false)
 {
 	m_trial = trial;
@@ -67,16 +61,19 @@ void Game::Initialize(HWND windows[], int width, int height)
 
 	m_gamePad = std::make_unique<DirectX::GamePad>();
 
+	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+	{
+		m_deviceResources->GoFullscreen(i);
+	}
+
+	getImagesAsTextures(m_textures);
+	Prerender();
+
 	m_timer.SetFixedTimeStep(true);
 	m_timer.SetTargetElapsedSeconds(m_trial.flicker_rate);
 
 	m_frameTimer.SetFixedTimeStep(true);
 	m_frameTimer.SetTargetElapsedSeconds(1.0f / 60.0f);
-
-	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-	{
-		m_deviceResources->GoFullscreen(i);
-	}
 }
 
 #pragma region Frame Update
@@ -198,7 +195,7 @@ void Game::Prerender()
 /// Given the four permutations of each image (left & decompressed, left, right & decompressed, right), returns the corresponding indices for the left and right images on a given window
 /// For the image that is flickering, the image alternates between the decompressed and original once every two frames
 /// 
-/// In total, there are 6 possible combinations (assuming the left image is the flickering one):
+/// In total, there are 6 possible combinations given the 4 permutations (assuming the left image is the flickering one):
 /// 
 /// <code>
 /// 1) Dec.	| L Image | L Window
@@ -208,20 +205,24 @@ void Game::Prerender()
 /// 5) Org.	| R Image | L Window
 /// 6) Org.	| R Image | R Windows
 /// </code>
-std::pair<int, int> Game::GetIndicesForFrame(int windowIndex)
+Utils::Duo<int> Game::GetIndicesForCurrentFrame(int windowIndex)
 {
-	int flickerImageIndex = m_flickerFrameFlag[windowIndex] ? 0 : 1;
-	if (windowIndex == 1) flickerImageIndex += 2;
+	// first calculate the flickering image index for the window
+	int flickerImageIndex = m_flickerFrameFlag[windowIndex] ? 0 : 1; // should it show the default state or flickered state?
+	if (windowIndex == 1) flickerImageIndex += 2; // 1 and 2 are for index 0 (left window), 3 and 4 are for index 1 (right window)
 
-	auto staticImageIndex = (windowIndex == 1) ? 1 : 3;
+	// now get the static index
+	const auto staticImageIndex = (windowIndex == 0) ? 1 : 3; // this is easy, its either the left or the right original depending on window
 
+	// we need to know which image to actually flicker
 	const auto correct = m_trial.questions[m_imageSetIndex].correct_option;
 
-	m_flickerFrameFlag[windowIndex] = !m_flickerFrameFlag[windowIndex];
+	m_flickerFrameFlag[windowIndex] = !m_flickerFrameFlag[windowIndex]; // toggle flicker for next frame
 
-	return (correct == Experiment::Left)
-		? std::pair<int, int>(flickerImageIndex, staticImageIndex)
-		: std::pair<int, int>(staticImageIndex, flickerImageIndex);
+	// set the left image to the flickering index and right image static if the correct (flickering) one is left; else vice versa
+	return (correct == Experiment::Option::Left)
+		? Utils::Duo<int>{ flickerImageIndex, staticImageIndex }
+		: Utils::Duo<int>{ staticImageIndex, flickerImageIndex };
 }
 
 #pragma region Frame Render
@@ -239,15 +240,14 @@ void Game::Render(int i)
 	m_deviceResources->PIXBeginEvent(L"Render");
 	auto context = m_deviceResources->GetD3DDeviceContext();
 
-	auto indices = GetIndicesForFrame(i);
+	auto indices = GetIndicesForCurrentFrame(i);
 
 	m_spriteBatch->Begin();
 
-	m_spriteBatch->Draw(m_shaderResourceViews[indices.first].Get(), m_leftImagePosition);
-	m_spriteBatch->Draw(m_shaderResourceViews[indices.second].Get(), m_rightImagePosition);
+	m_spriteBatch->Draw(m_shaderResourceViews[indices.left].Get(), m_imagePositions.left);		// left
+	m_spriteBatch->Draw(m_shaderResourceViews[indices.right].Get(), m_imagePositions.right);	// right
 
 	m_spriteBatch->End();
-
 
 	m_deviceResources->PIXEndEvent();
 
@@ -258,11 +258,6 @@ void Game::Render(int i)
 
 	ID3D11ShaderResourceView* nullsrv[] = { nullptr };
 	context->PSSetShaderResources(0, 1, nullsrv);
-
-	// Show the new frame.
-	// m_deviceResources->CleanFrame(i);
-
-	
 }
 
 // Helper method to clear the back buffers.
@@ -367,8 +362,7 @@ void Game::CreateDeviceDependentResources()
 		m_toneMap[i]->SetST2084Parameter(64);
 	}
 
-	getImagesAsTextures(m_textures);
-	Prerender();
+	
 }
 
 // Allocate all memory resources that change on a window SizeChanged event.
@@ -401,7 +395,6 @@ void Game::OnDeviceRestored()
 }
 #pragma endregion
 
-// The origin is defined as the bottom left of the screen
 static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
 {
 	const cv::Mat croppedRef(mat, cropRegion);
@@ -412,7 +405,13 @@ static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
 	return cropped;
 }
 
-
+/// The secret sauce. Converts a set of permutations of a single image into an array of <code>Microsoft::WRL::ComPtr<ID3D11Texture2D></code> textures
+/// 
+/// 1) The image is first read via <code>cv::imread()</code>
+/// 2) The BGRA matrix is converted to RGB
+/// 3) The matrix is cropped according to the region defined in the configuration file
+/// 4) The origin (top left corner) of the left and right images are set accordingly
+/// 5) A texture is initialized, and the matrix is converted to it
 void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 {
 	auto filenames = m_files[m_imageSetIndex];
@@ -429,18 +428,21 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 		const auto r = m_trial.questions[m_imageSetIndex].region;
 		auto cropped = CropMatrix(matrix, cv::Rect(r.x, r.y, r.w, r.h));
 
-		const auto w = 3840, h = 2160;
+		const auto dims = m_deviceResources->GetDimensions();
 
-		m_leftImagePosition = {
-			static_cast<float>(w / 2 - m_trial.distance / 2 - cropped.cols),
-			static_cast<float>(h / 2 - cropped.rows / 2)
-		};
+		auto left = DirectX::SimpleMath::Vector2(
+			dims.x / 2 - m_trial.distance / 2 - cropped.cols,
+			dims.y / 2 - cropped.rows / 2
+		);
 
-		m_rightImagePosition = {
-			static_cast<float>(w / 2 + m_trial.distance / 2),
-			static_cast<float>(h / 2 - cropped.rows / 2)
-		};
+		auto right = DirectX::SimpleMath::Vector2(
+			dims.x / 2 + m_trial.distance / 2,
+			dims.y / 2 - cropped.rows / 2
+		);
 
+		Debug::log("\n LeftW: %f, RightW: %f\n", left.x, right.x);
+
+		m_imagePositions = { left, right };
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;

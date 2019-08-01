@@ -63,6 +63,8 @@ namespace DX
 		DXGI_COLOR_SPACE_TYPE   GetColorSpace() const { return m_colorSpace; }
 		unsigned int            GetDeviceOptions() const { return m_options; }
 
+		DirectX::SimpleMath::Vector2 GetDimensions() const { return dimensions; }
+
 		// Performance events
 		void PIXBeginEvent(_In_z_ const wchar_t* name)
 		{
@@ -123,6 +125,8 @@ namespace DX
 		// The IDeviceNotify can be held directly as it owns the DeviceResources.
 		IDeviceNotify* m_deviceNotify;
 
-		int m_numWindows = 1;
+		int m_numWindows;
+
+		DirectX::SimpleMath::Vector2 dimensions;
 	};
 }

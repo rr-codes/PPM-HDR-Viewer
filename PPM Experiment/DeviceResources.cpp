@@ -264,6 +264,11 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 	UINT backBufferHeight = std::max<UINT>(static_cast<UINT>(m_outputSize.bottom - m_outputSize.top), 1u);
 	DXGI_FORMAT backBufferFormat = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? NoSRGB(m_backBufferFormat) : m_backBufferFormat;
 
+	this->dimensions = DirectX::SimpleMath::Vector2(
+		backBufferWidth, 
+		backBufferHeight
+	);
+
 	for (int i = 0; i < m_numWindows; i++) {
 
 		if (m_swapChain[i])

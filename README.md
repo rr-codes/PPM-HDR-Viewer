@@ -1,6 +1,12 @@
 # PPM HDR Viewer
 
-Allows viewing of steroscopic 10 bit HDR PPM images via OpenCV + DirectXTK, with options for stereo viewing and flicker testing.
+This solutionn contains two projects:
+* **HDR Viewer**: This allows for 16-bit `*.ppm` images to be displayed with options for stereo and flickering
+* **PPM Experiment**: Displays specific regions of a set of `*.ppm` images on two monitors, configured in a `*.json` file.
+
+## HDR Viewer
+
+Allows viewing of steroscopic 16 bit HDR PPM images via OpenCV + DirectXTK, with options for stereo viewing and flicker testing.
  
 ### Installation
 
@@ -12,22 +18,22 @@ Allows viewing of steroscopic 10 bit HDR PPM images via OpenCV + DirectXTK, with
 
 - Windows 10, Fall Creators Update 2018 or later
 - NVIDIA GPU
-- 2 4K HDR (10 bit) capable monitors
-- At least four permutations of a single 4K 10 bit PPM image
+- 4K HDR (10 bit) capable monitor(s)
 - OpenCV v4.0+, DirectX 11, DirectXTK fork
 
+### Options
+
+**Option 1**: Double click a 4K 16-bit `*.ppm` image to view it. (You may have to right click on the file > `Open With` annd select `HDRViewer19.exe`)
+
+**Option 2**: Run `HDRViewer19.exe`. In the configuration wizard, you may select several options:
+* *Stereo*: Allows viewing of stereoscopic images. Requires two monitors be connected. There must be at least 2 permutations of each image, or 4 if *Flicker* is also enabled.
+* *Flicker*: Flickers the image at a specific rate. There must be at least 2 permutations of each image, or 4 if *Stereo* is also enabled.
+
+Then, select the directory which contains the images.
+
 ### Usage
+Use the arrow keys to navigate between the images. Press `Esc` to quit the app.
 
-In Command Prompt: 
-
-```
-HDRViewer19.exe [-flicker] path
-```
-
-- `flicker`: flickers between the first and the third permutations of an image at a rate of 100ms
-- `path`: the absolute path to the directory containing the images. It is required that there are four (alphabetically) consecutive permutations of each image in the folder, even if `flicker` and `stereo` are disabled.
-
-Press the space bar to cycle through the images in `path`. To quit the app, press `Esc`
 
 ### Credits
 

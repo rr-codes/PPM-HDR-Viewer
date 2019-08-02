@@ -83,21 +83,31 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	MSG msg = {};
 
-	int stereo = MessageBox(nullptr, L"Do you want to view in stereo?", L"Enable Stereo", MB_YESNO | MB_ICONQUESTION);
-	int flicker = MessageBox(nullptr, L"Do you want the image(s) to flicker?", L"Enable Flicker", MB_YESNO | MB_ICONQUESTION);
-	auto folder = BrowseFolder("C:\\");
-
-	numberOfWindows = (stereo == IDYES) ? 2 : 1;
-
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	g_game = std::make_unique<Game>(folder, flicker == IDYES, stereo == IDYES);
+	std::wstring path(lpCmdLine);
+	auto sub = (path.size() > 4) ? path.substr(1, path.size() - 2) : path;
+
+	if (std::filesystem::path(sub).extension() == ".ppm")
+	{
+		numberOfWindows = 1;
+		g_game = std::make_unique<Game>(sub, false, false);
+	}
+	else
+	{
+		int stereo = MessageBox(nullptr, L"Do you want to view in stereo?", L"Enable Stereo", MB_YESNO | MB_ICONQUESTION);
+		int flicker = MessageBox(nullptr, L"Do you want the image(s) to flicker?", L"Enable Flicker", MB_YESNO | MB_ICONQUESTION);
+		auto folder = BrowseFolder("C:\\");
+
+		numberOfWindows = (stereo == IDYES) ? 2 : 1;
+
+		g_game = std::make_unique<Game>(folder, flicker == IDYES, stereo == IDYES);
+	}
 
 	RECT rc;
 
 	windows = new HWND[numberOfWindows];
-
 
 	for (int i = 0; i < numberOfWindows; i++) {
 

@@ -513,13 +513,11 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
-	int swapped = m_numWindows == 2 ? 1 - i : i;
-
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 	
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(swapped, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
@@ -530,7 +528,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 		exit(1);
 	}
 	
-	UpdateColorSpace(swapped);
+	UpdateColorSpace(i);
 	CreateWindowSizeDependentResources();
 }
 

@@ -109,8 +109,6 @@ void Game::OnArrowKeyDown(WPARAM key)
 
 void Game::OnEscapeKeyDown()
 {
-	m_deviceResources->GetDebugLayer()->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-
 	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
@@ -442,7 +440,6 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 			dims.y / 2 - cropped.rows / 2
 		);
 
-		printf("\n LeftW: %f, RightW: %f\n", left.x, right.x);
 		Debug::Console::log("\n LeftW: %f, RightW: %f\n", left.x, right.x);
 
 		m_imagePositions = { left, right };
@@ -489,9 +486,9 @@ matrix<std::filesystem::path> Game::getFiles(string_ref folder, const std::vecto
 		std::vector<std::filesystem::path> paths;
 
 		paths.emplace_back(path + "_L_dec.ppm");
-		paths.emplace_back(path + "_L.ppm");
+		paths.emplace_back(path + "_L_orig.ppm");
 		paths.emplace_back(path + "_R_dec.ppm");
-		paths.emplace_back(path + "_R.ppm");
+		paths.emplace_back(path + "_R_orig.ppm");
 
 		folder_vector.push_back(paths);
 	}

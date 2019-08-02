@@ -366,40 +366,49 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 matrix<std::string> Game::getFiles(const std::wstring& folder)
 {
 	matrix<std::string> folder_vector;
-	 std::vector<std::string> files;
-	
-	 for (const auto& file : std::filesystem::directory_iterator(folder))
-	 {
-	 	files.push_back(file.path().generic_string());
-	 }
+	std::vector<std::string> files;
 
-	if (m_numberOfWindows == 1 && !m_flickerEnable)
+
+	auto path = std::filesystem::path(folder);
+
+	if (path.extension() == ".ppm")
 	{
-		for (int i = 0; i < files.size(); i++)
-		{
-			folder_vector.push_back(std::vector<std::string>{files[i], files[i]});
-		}
-	} 
-	else if (m_numberOfWindows == 1 && m_flickerEnable)
-	{
-		for (int i = 0; i < files.size() - 1; i += 2)
-		{
-			folder_vector.push_back(std::vector<std::string>{files[i], files[i + 1]});
-		}
+		folder_vector.push_back(std::vector<std::string> {
+			path.generic_string(), 
+			path.generic_string()
+		});
+
+		return folder_vector;
 	}
-	else if (m_numberOfWindows == 2 && !m_flickerEnable)
+	
+	for (const auto& file : std::filesystem::directory_iterator(folder))
 	{
-		for (int i = 0; i < files.size() - 1; i += 2)
-		{
-			folder_vector.push_back(std::vector<std::string>{files[i], files[i], files[i + 1], files[i + 1]});
-		}
+		files.push_back(file.path().generic_string());
 	}
-	else if (m_numberOfWindows == 2 && m_flickerEnable)
+
+	auto delta = m_numberOfWindows * (1 + (m_flickerEnable ? 1 : 0));
+	for (auto i = 0; i < files.size() - delta + 1; i += delta)
 	{
-		for (int i = 0; i < files.size() - 3; i += 4)
+		std::vector<std::string> permutations(4);
+
+		if (m_numberOfWindows == 1 && !m_flickerEnable)
 		{
-			folder_vector.push_back(std::vector<std::string>{files[i], files[i + 1], files[i + 2], files[i + 3]});
+			permutations = { files[i], files[i] };
 		}
+		else if (m_numberOfWindows == 1 && m_flickerEnable)
+		{
+			permutations = { files[i], files[i + 1] };
+		}
+		else if (!m_flickerEnable)
+		{
+			permutations = { files[i + 1], files[i + 1], files[i], files[i] };
+		}
+		else if (m_flickerEnable)
+		{
+			permutations = { files[i], files[i + 1], files[i + 2], files[i + 3]};
+		}
+
+		folder_vector.push_back(permutations);
 	}
 
 	return folder_vector;

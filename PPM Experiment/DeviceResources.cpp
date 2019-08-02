@@ -518,7 +518,7 @@ void DX::DeviceResources::CleanFrame(int i)
 void DX::DeviceResources::GoFullscreen(int i)
 {
 	// make the 2nd output have he 1st swapchain and vice versa to have proper stereo
-	int actual = (NUMBER_OF_WINDOWS == 2) ?  1 - i : i;
+	int actual = i;
 
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());

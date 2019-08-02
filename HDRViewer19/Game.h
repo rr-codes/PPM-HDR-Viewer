@@ -16,7 +16,7 @@ using string_ref = const std::string &;
 class Game final : public DX::IDeviceNotify
 {
 public:
-	Game(string_ref folderPath, bool flicker) noexcept(false);
+	Game(const std::wstring& folderPath, bool flicker, bool stereo) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
@@ -29,7 +29,7 @@ public:
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
 	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
-	matrix<std::string> getFiles(string_ref folder);
+	matrix<std::string> getFiles(const std::wstring& folder);
 
 	// Messages
 	void OnActivated();
@@ -74,4 +74,6 @@ private:
 	bool m_flickerEnable = false;
 
 	matrix<std::string> m_files;
+
+	int m_numberOfWindows;
 };

@@ -61,9 +61,6 @@
 
 #include <stdio.h>
 
-#define NUMBER_OF_WINDOWS 2
-#define IMAGE_TEST true
-
 // convenience typealiases
 
 template <typename T>

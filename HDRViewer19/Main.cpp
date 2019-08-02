@@ -8,6 +8,10 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <shlobj.h>
+#include <windows.h>
+#include <sstream>
+
 
 HWND* windows;
 
@@ -19,6 +23,7 @@ namespace
 };
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
 
 // Indicates to hybrid graphics systems to prefer the discrete part by default
 extern "C"
@@ -27,9 +32,40 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-bool argumentsAreValid(std::vector<std::string> arguments)
+int numberOfWindows;
+
+std::wstring BrowseFolder(std::string saved_path)
 {
-	return true;
+	TCHAR path[MAX_PATH];
+
+	std::wstring wsaved_path(saved_path.begin(), saved_path.end());
+	const wchar_t* path_param = wsaved_path.c_str();
+
+	BROWSEINFO bi = { 0 };
+	bi.lpszTitle = (L"Browse for folder...");
+	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	bi.lpfn = BrowseCallbackProc;
+	bi.lParam = (LPARAM)path_param;
+
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+
+	if (pidl != 0)
+	{
+		//get the name of the folder and put it in path
+		SHGetPathFromIDList(pidl, path);
+
+		//free memory used
+		IMalloc* imalloc = 0;
+		if (SUCCEEDED(SHGetMalloc(&imalloc)))
+		{
+			imalloc->Free(pidl);
+			imalloc->Release();
+		}
+
+		return path;
+	}
+
+	return L"";
 }
 
 // Entry point
@@ -41,43 +77,29 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!DirectX::XMVerifyCPUSupport())
 		return 1;
 
-	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED | COINIT_APARTMENTTHREADED);
 	if (FAILED(hr))
 		return 1;
 
 	MSG msg = {};
 
-	auto arguments = string::split(string::to_string(lpCmdLine));
-	auto shouldFlicker = vector::contains<std::string>(arguments, "-flicker");
+	int stereo = MessageBox(nullptr, L"Do you want to view in stereo?", L"Enable Stereo", MB_YESNO | MB_ICONQUESTION);
+	int flicker = MessageBox(nullptr, L"Do you want the image(s) to flicker?", L"Enable Flicker", MB_YESNO | MB_ICONQUESTION);
+	auto folder = BrowseFolder("C:\\");
+
+	numberOfWindows = (stereo == IDYES) ? 2 : 1;
 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	if (!argumentsAreValid(arguments))
-	{
-		std::string str = "Error parsing arguments.";
-
-		const auto result = MessageBox(
-			nullptr, 
-			std::wstring(str.begin(), str.end()).c_str(), 
-			L"Error", 
-			0
-		);
-
-		if (result == 1) exit(1);
-	}
-
-	g_game = std::make_unique<Game>( 
-		arguments.back(), 
-		shouldFlicker
-	);
+	g_game = std::make_unique<Game>(folder, flicker == IDYES, stereo == IDYES);
 
 	RECT rc;
 
-	windows = new HWND[NUMBER_OF_WINDOWS];
+	windows = new HWND[numberOfWindows];
 
 
-	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
+	for (int i = 0; i < numberOfWindows; i++) {
 
 		// Register class and create window
 		{
@@ -152,6 +174,17 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	return static_cast<int>(msg.wParam);
 }
 
+static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+{
+	if (uMsg == BFFM_INITIALIZED)
+	{
+		LPCTSTR path = reinterpret_cast<LPCTSTR>(lpData);
+		::SendMessage(hwnd, BFFM_SETSELECTION, true, (LPARAM)path);
+	}
+
+	return 0;
+}
+
 // Windows procedure
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -164,7 +197,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	// TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
 	auto wndIndex = 0;
-	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+	for (int i = 0; i < numberOfWindows; i++)
 	{
 		if (windows[i] == hWnd) wndIndex = i;
 	}

@@ -109,6 +109,8 @@ void Game::OnArrowKeyDown(WPARAM key)
 
 void Game::OnEscapeKeyDown()
 {
+	m_deviceResources->GetDebugLayer()->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+
 	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 	{
 		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
@@ -440,7 +442,8 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 			dims.y / 2 - cropped.rows / 2
 		);
 
-		Debug::log("\n LeftW: %f, RightW: %f\n", left.x, right.x);
+		printf("\n LeftW: %f, RightW: %f\n", left.x, right.x);
+		Debug::Console::log("\n LeftW: %f, RightW: %f\n", left.x, right.x);
 
 		m_imagePositions = { left, right };
 

@@ -462,12 +462,17 @@ void DX::DeviceResources::HandleDeviceLost()
 
 void DX::DeviceResources::ThreadPresent()
 {
-	std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
-	std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
+	if constexpr (NUMBER_OF_WINDOWS == 2) {
+		std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
+		std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
 
-
-	one.join();
-	two.join();
+		one.join();
+		two.join();
+	}
+	else
+	{
+		m_swapChain[0]->Present(1, 0);
+	}
 }
 
 // CleanFrame the contents of the swap chain to the screen.
@@ -513,7 +518,7 @@ void DX::DeviceResources::CleanFrame(int i)
 void DX::DeviceResources::GoFullscreen(int i)
 {
 	// make the 2nd output have he 1st swapchain and vice versa to have proper stereo
-	int actual = 1 - i;
+	int actual = (NUMBER_OF_WINDOWS == 2) ?  1 - i : i;
 
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
@@ -522,13 +527,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 	auto hr = adapter.Get()->EnumOutputs(actual, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
-#ifdef _DEBUG
-	DXGI_OUTPUT_DESC desc;
-	output.Get()->GetDesc(&desc);
-
-	Debug::log(desc.DeviceName);
-#endif
-
+#ifdef FULLSCREEN
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
 	if (FAILED(hr))
@@ -539,6 +538,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 
 	UpdateColorSpace(actual);
 	CreateWindowSizeDependentResources();
+#endif
 }
 
 void DX::DeviceResources::CreateFactory()

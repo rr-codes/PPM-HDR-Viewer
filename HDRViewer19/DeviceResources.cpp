@@ -457,6 +457,12 @@ void DX::DeviceResources::HandleDeviceLost()
 
 void DX::DeviceResources::ThreadPresent()
 {
+	if (m_numWindows == 1)
+	{
+		m_swapChain[0]->Present(1, 0);
+		return;
+	}
+
 	std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
 	std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
 
@@ -507,19 +513,14 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
+	int swapped = m_numWindows == 2 ? 1 - i : i;
+
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 	
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(1 - i, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(swapped, output.GetAddressOf());
 	ThrowIfFailed(hr);
-
-#ifdef _DEBUG
-	DXGI_OUTPUT_DESC desc;
-	output.Get()->GetDesc(&desc);
-
-	Debug::log(desc.DeviceName);
-#endif
 
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
@@ -529,7 +530,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 		exit(1);
 	}
 	
-	UpdateColorSpace(1 - i);
+	UpdateColorSpace(swapped);
 	CreateWindowSizeDependentResources();
 }
 

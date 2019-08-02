@@ -12,6 +12,7 @@
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "opencv_world410d.lib")
+#pragma comment(lib, "dxguid.lib")
 
 // Use the C++ standard templated min/max
 #define NOMINMAX
@@ -58,11 +59,13 @@
 #include "Utils.h"
 
 #include <comdef.h>
+#include <dxgidebug.h>
 
 #include <stdio.h>
 #include <vector>
 
-#define NUMBER_OF_WINDOWS 2
+#define NUMBER_OF_WINDOWS 1
+//#define FULLSCREEN
 
 // convenience typealiases
 

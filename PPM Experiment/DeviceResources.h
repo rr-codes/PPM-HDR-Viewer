@@ -63,6 +63,13 @@ namespace DX
 		DXGI_COLOR_SPACE_TYPE   GetColorSpace() const { return m_colorSpace; }
 		unsigned int            GetDeviceOptions() const { return m_options; }
 
+		IDXGIDebug* GetDebugLayer() const
+		{
+			Microsoft::WRL::ComPtr<IDXGIDebug> debug;
+			m_d3dDevice.As(&debug);
+			return debug.Get();
+		}
+
 		DirectX::SimpleMath::Vector2 GetDimensions() const { return dimensions; }
 
 		// Performance events

@@ -22,6 +22,21 @@ namespace Utils
 	{
 		T left, right;
 	};
+
+	static void FatalError(const std::string& message)
+	{
+		const auto result = MessageBoxA(
+			nullptr, 
+			message.c_str(), 
+			"Fatal Error", 
+			MB_OK | MB_ICONERROR | MB_TOPMOST
+		);
+
+		if (result == IDOK)
+		{
+			exit(1);
+		}
+	}
 }
 
 
@@ -73,7 +88,7 @@ namespace Debug
 
 		static void log(const wchar_t* format, ...)
 		{
-			wchar_t buf[1024];
+			wchar_t buf[2048];
 			va_list args;
 			va_start(args, format);
 

@@ -64,7 +64,7 @@
 #include <stdio.h>
 #include <vector>
 
-#define NUMBER_OF_WINDOWS 2
+#define NUMBER_OF_WINDOWS 1
 #define FULLSCREEN
 
 // convenience typealiases

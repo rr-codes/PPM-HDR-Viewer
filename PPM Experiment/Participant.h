@@ -1,5 +1,3 @@
-// ConsoleApplication2.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 #pragma once
 
@@ -34,19 +32,23 @@ namespace Experiment {
 	struct Trial
 	{
 		std::string folderPath = "";
-		int id = 0;
+		std::string id = "0";
 		float flicker_rate = 1.0f;
-		int distance = 1;
+		int distance = 100;
 
 		std::vector<Question> questions = {};
 		std::vector<Response> responses = {};
 
-		void ExportResults(const std::filesystem::path& path);
+		static Trial CreateTrial(const std::filesystem::path& configPath, const std::string& id);
+
+		void ExportResults(const std::filesystem::path& path) const;
+
+		friend std::ostream& operator<<(std::ostream& os, const Trial& t);
 	};
+
+	std::ostream& operator<<(std::ostream& os, const Trial& t);
 
 	void from_json(const nlohmann::json& j, Region& r);
 	void from_json(const nlohmann::json& j, Question& q);
 	void from_json(const nlohmann::json& j, Trial& t);
-
-	Trial CreateTrial(const std::filesystem::path& configPath);
 }

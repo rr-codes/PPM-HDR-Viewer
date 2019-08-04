@@ -34,6 +34,7 @@ namespace DX
 			D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0,
 			unsigned int flags = c_FlipPresent
 		) noexcept;
+		~DeviceResources();
 
 		void CreateDeviceResources();
 		void CreateWindowSizeDependentResources();

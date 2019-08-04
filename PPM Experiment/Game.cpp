@@ -114,6 +114,8 @@ void Game::OnEscapeKeyDown()
 		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
 	}
 
+	m_deviceResources.reset();
+
 	exit(0);
 }
 
@@ -128,23 +130,28 @@ void Game::OnGamePadButton(const DirectX::GamePad::State state)
 
 	if (right != Button::PRESSED && left != Button::PRESSED)
 	{
+		m_gamePad->SetVibration(0, 0, 0);
 		return;
 	}
 
 	const std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - last_time;
 
-	m_trial.responses.push_back(Experiment::Response {
-		(right == Button::PRESSED) 
-			? Experiment::Option::Right 
+	m_gamePad->SetVibration(0, 1.0, 1.0);
+
+	const auto response = Experiment::Response{
+		(right == Button::PRESSED)
+			? Experiment::Option::Right
 			: Experiment::Option::Left,
 		elapsed_seconds.count()
-	});
+	};
+
+	m_trial.responses.push_back(response);
 
 	// go to next
 
-	if (++m_imageSetIndex >= m_files.size())
+	if (++m_imageSetIndex >= static_cast<int>(m_files.size()))
 	{
-		m_trial.ExportResults(std::filesystem::path("C:/test.csv"));
+		m_trial.ExportResults(R"(C:\Users\Richard\Desktop\result)" + m_trial.id + ".csv");
 
 		OnEscapeKeyDown();
 		return;
@@ -463,13 +470,7 @@ void Game::getImagesAsTextures(ComPtr<ID3D11Texture2D>* textures)
 		}
 		catch (cv::Exception& e)
 		{
-			auto msg = e.err;
-			throw cv::Exception();
-		}
-
-		if (textures[i] == nullptr)
-		{
-			throw std::exception("cannot read image");
+			Utils::FatalError(e.err);
 		}
 	}
 
@@ -489,6 +490,14 @@ matrix<std::filesystem::path> Game::getFiles(string_ref folder, const std::vecto
 		paths.emplace_back(path + "_L_orig.ppm");
 		paths.emplace_back(path + "_R_dec.ppm");
 		paths.emplace_back(path + "_R_orig.ppm");
+
+		for (auto& full_path : paths)
+		{
+			if (!std::filesystem::is_regular_file(full_path))
+			{
+				Utils::FatalError("File not found: " + full_path.generic_string());
+			}
+		}
 
 		folder_vector.push_back(paths);
 	}

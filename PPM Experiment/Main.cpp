@@ -2,12 +2,19 @@
 // Main.cpp
 //
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "pch.h"
 #include "Game.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include "tinyfiledialogs.h"
+
+#pragma comment(lib, "Comdlg32.lib")
 
 HWND* windows;
 
@@ -36,7 +43,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	if (!DirectX::XMVerifyCPUSupport())
 		return 1;
 
-	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED | COINIT_APARTMENTTHREADED);
 	if (FAILED(hr))
 		return 1;
 
@@ -45,7 +52,25 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto trial = Experiment::CreateTrial(string::to_string(lpCmdLine));
+	const wchar_t* filter = { L"*.json" };
+	const auto file = tinyfd_openFileDialogW(
+		L"Select Configuration FIle",
+		nullptr,
+		1,
+		&filter,
+		L"JSON",
+		0
+	);
+
+	const auto id = tinyfd_inputBox(
+		"Enter Participant ID", 
+		"Enter Participant ID", 
+		"-1"
+	);
+
+	if (file == nullptr || id == "") exit(0);
+
+	auto trial = Experiment::Trial::CreateTrial(file, id);
 	g_game = std::make_unique<Game>(trial);
 
 	RECT rc;

@@ -48,8 +48,8 @@ namespace Experiment
 
 	void from_json(const nlohmann::json& j, Trial& t)
 	{
-		j.at("folder path").get_to<std::string>(t.folderPath);
-		j.at("flicker rate").get_to<float>(t.flicker_rate);
+		j.at("folder path").get_to(t.folderPath);
+		j.at("flicker rate").get_to(t.flicker_rate);
 		j.at("distance").get_to<int>(t.distance);
 
 		j.at("questions").get_to<std::vector<Question>>(t.questions);

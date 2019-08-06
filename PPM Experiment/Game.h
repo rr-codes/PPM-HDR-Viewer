@@ -11,6 +11,7 @@
 #include "GamePad.h"
 #include "Participant.h"
 #include "SimpleMath.h"
+#include "Controller.h"
 
 using string_ref = const std::string &;
 
@@ -19,21 +20,18 @@ using string_ref = const std::string &;
 class Game final : public DX::IDeviceNotify
 {
 public:
-	Game(const Experiment::Trial& trial) noexcept(false);
+	Game(Experiment::Trial trial) noexcept(false);
 
 	// Initialization and management
 	void Initialize(HWND windows[], int width, int height);
 	// Basic game loop
 	void Tick();
-	void OnArrowKeyDown(WPARAM key);
 	void OnEscapeKeyDown();
-	void OnGamePadButton(DirectX::GamePad::State state);
+	void OnGamePadButton(DX::StepTimer const& timer);
 
 	// IDeviceNotify
 	virtual void OnDeviceLost() override;
 	virtual void OnDeviceRestored() override;
-	void getImagesAsTextures(Microsoft::WRL::ComPtr<ID3D11Texture2D>* textures);
-	static matrix<std::filesystem::path> getFiles(string_ref folder, const std::vector<Experiment::Question>& questions);
 
 	// Messages
 	void OnActivated();
@@ -46,15 +44,16 @@ public:
 	// Properties
 	void GetDefaultSize(int& width, int& height) const;
 
-	void Prerender();
-	Utils::Duo<int> GetIndicesForCurrentFrame(int windowIndex);
-	void Render(int i);
 	void Clear(int i);
-
 
 private:
 
 	void Update(DX::StepTimer const& timer);
+
+	void Render(const std::function<void(int, DirectX::SpriteBatch*)>& func);
+	void RenderStereo(const Experiment::DuoView& duo_view);
+	void RenderStereo(const Experiment::SingleView& single_view);
+
 
 	void CreateDeviceDependentResources();
 	void CreateWindowSizeDependentResources();
@@ -71,20 +70,15 @@ private:
 	std::unique_ptr<DX::RenderTexture>* m_hdrScene;
 	std::unique_ptr<DirectX::ToneMapPostProcess>* m_toneMap;
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>* m_shaderResourceViews;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D>* m_textures;
-
-	bool* m_flickerFrameFlag;
-	int m_imageSetIndex = 0;
-
-	matrix<std::filesystem::path> m_files;
+	bool m_shouldFlicker = false;
+	bool m_isReady = false;
 
 	std::unique_ptr<DirectX::GamePad>  m_gamePad;
 	DirectX::GamePad::ButtonStateTracker m_buttons;
 
 	Experiment::Trial m_trial;
+	Experiment::Controller* m_controller;
 
-	std::chrono::time_point<std::chrono::system_clock> last_time;
 
-	Utils::Duo<DirectX::SimpleMath::Vector2> m_imagePositions;
+	std::pair<Experiment::DuoView, Experiment::DuoView> m_stereoViews;
 };

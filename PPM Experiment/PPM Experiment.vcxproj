@@ -159,6 +159,7 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Controller.cpp" />
     <ClCompile Include="DeviceResources.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -168,18 +169,25 @@
     <ClCompile Include="tinyfiledialogs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Controller.h" />
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Main.h" />
     <ClInclude Include="Participant.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RenderTexture.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="StepTimer.h" />
     <ClInclude Include="tinyfiledialogs.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="response\responsescreen_L.ppm" />
+    <None Include="response\responsescreen_R.ppm" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PPM Experiment.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -187,10 +187,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KEYDOWN:
-		if (game && (wParam == VK_LEFT || wParam == VK_RIGHT))
-		{
-			game->OnArrowKeyDown(wParam);
-		}
 		if (game && wParam == VK_ESCAPE)
 		{
 			game->OnEscapeKeyDown();

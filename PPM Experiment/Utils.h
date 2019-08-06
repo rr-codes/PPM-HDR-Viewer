@@ -4,6 +4,7 @@
 #include <iterator>
 #include <filesystem>
 #include "pch.h"
+#include "Participant.h"
 
 namespace vector
 {
@@ -16,19 +17,12 @@ namespace vector
 
 namespace Utils
 {
-	/// A pair of one type of element representing data associated with sidedness
-	template <typename T>
-	struct Duo
-	{
-		T left, right;
-	};
-
 	static void FatalError(const std::string& message)
 	{
 		const auto result = MessageBoxA(
-			nullptr, 
-			message.c_str(), 
-			"Fatal Error", 
+			nullptr,
+			message.c_str(),
+			"Fatal Error",
 			MB_OK | MB_ICONERROR | MB_TOPMOST
 		);
 
@@ -37,6 +31,22 @@ namespace Utils
 			exit(1);
 		}
 	}
+
+	/// A pair of one type of element representing data associated with sidedness
+	template <typename T>
+	struct Duo
+	{
+		T left, right;
+
+		T operator[](int i) const
+		{
+			if (i == 0) return left;
+			if (i == 1) return right;
+
+			FatalError("Index of Duo Out of Bounds");
+			return left;
+		}
+	};
 }
 
 

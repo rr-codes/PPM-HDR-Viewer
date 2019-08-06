@@ -22,6 +22,7 @@ namespace DX
 	class DeviceResources
 	{
 	public:
+
 		static const unsigned int c_FlipPresent = 0x1;
 		static const unsigned int c_AllowTearing = 0x2;
 		static const unsigned int c_EnableHDR = 0x4;
@@ -34,7 +35,6 @@ namespace DX
 			D3D_FEATURE_LEVEL minFeatureLevel = D3D_FEATURE_LEVEL_10_0,
 			unsigned int flags = c_FlipPresent
 		) noexcept;
-		~DeviceResources();
 
 		void CreateDeviceResources();
 		void CreateWindowSizeDependentResources();

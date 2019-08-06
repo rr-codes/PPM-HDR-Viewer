@@ -517,6 +517,7 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
+#ifdef FULLSCREEN
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 
@@ -528,7 +529,6 @@ void DX::DeviceResources::GoFullscreen(int i)
 		Utils::FatalError("Index exceeds number of outputs (index: 1, outputs: 1)");
 	}
 
-#ifdef FULLSCREEN
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
 	if (FAILED(hr))

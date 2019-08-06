@@ -64,13 +64,15 @@
 #include <stdio.h>
 #include <vector>
 
-#define NUMBER_OF_WINDOWS 1
-#define FULLSCREEN
+#define NUMBER_OF_WINDOWS 2
+//#define FULLSCREEN
 
 // convenience typealiases
 
 template <typename T>
 using matrix = std::vector<std::vector<T>>;
+using Resource = ID3D11ShaderResourceView *;
+
 
 #ifdef _DEBUG
 #include <dxgidebug.h>

@@ -1,23 +1,36 @@
 #include "Participant.h"
+#include "Utils.h"
 
 
 namespace Experiment
 {
+	static const std::string delim = "\t";
+
+	std::ostream& operator<<(std::ostream& os, const Region& r)
+	{
+		os << r.x << " " << r.y << " " << r.w << " " << r.h;
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Question& q)
+	{
+		os << q.image_name << delim << q.correct_option << delim << q.region;
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Response& r)
+	{
+		const auto time = static_cast<double>(r.duration) / 1000.0;
+		os << r.user_answer << delim << time;
+		return os;
+	}
+
+	/// [Id] [image] [correct] [region] [answer] [time]
 	std::ostream& operator<<(std::ostream& os, const Trial& t)
 	{
-		const auto delim = ",";
-
 		for (unsigned int i = 0; i < t.responses.size(); ++i)
 		{
-			const auto q = t.questions[i];
-			const auto r = t.responses[i];
-
-			os << t.id << delim 
-				<< i << delim
-				<< q.image_name << delim 
-				<< q.correct_option << delim
-				<< r.duration << delim 
-				<< r.user_answer;
+			os << t.id << delim << t.questions[i] << delim << t.responses[i] << "\n";
 		}
 
 		return os;
@@ -26,6 +39,8 @@ namespace Experiment
 	void Trial::ExportResults(const std::filesystem::path& path) const
 	{
 		std::ofstream file(path.generic_string());
+
+		file << "ID\tImage\tCorrect\tCrop Region\tAnswer\tTime\n";
 
 		file << *this << "\n";
 		file.close();
@@ -48,6 +63,7 @@ namespace Experiment
 
 	void from_json(const nlohmann::json& j, Trial& t)
 	{
+		j.at("id").get_to(t.id);
 		j.at("folder path").get_to(t.folderPath);
 		j.at("flicker rate").get_to(t.flicker_rate);
 		j.at("distance").get_to<int>(t.distance);
@@ -58,6 +74,7 @@ namespace Experiment
 	/// Sample JSON Config file:
 	/// <code>
 	/// {
+	///		"id" : user42
 	///		"folder path" : "C:/Users/lab/Desktop/colors",
 	///		"flicker rate" : 1.0,
 	///		"distance" : 500,
@@ -78,18 +95,24 @@ namespace Experiment
 	///		]
 	///	}
 	///	</code>
-	Trial Trial::CreateTrial(const std::filesystem::path& configPath, const std::string& id)
+	Trial Trial::CreateTrial(const std::filesystem::path& configPath)
 	{
 		std::ifstream file(configPath);
 		nlohmann::json json;
 
 		file >> json;
-		auto trial = json.get<Experiment::Trial>();
-
-		trial.id = id;
-
 		file.close();
-		return trial;
+
+		try {
+			auto trial = json.get<Experiment::Trial>();
+			return trial;
+		} catch (std::exception& e)
+		{
+			std::string msg(e.what());
+			Utils::FatalError("Incorrect configuration file format. (" + msg + ")");
+		}
+
+		return {};
 	}
 }
 

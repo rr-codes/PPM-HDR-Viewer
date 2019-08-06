@@ -86,12 +86,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto paramPath = std::filesystem::path(lpCmdLine);
+	std::wstring ws(lpCmdLine);
 
-	if (paramPath.extension() == ".ppm")
+	if (!ws.empty())
 	{
 		numberOfWindows = 1;
-		g_game = std::make_unique<Game>(paramPath.generic_wstring(), false, false);
+		g_game = std::make_unique<Game>(ws.substr(1, ws.size() - 2), false, false);
 	}
 	else
 	{

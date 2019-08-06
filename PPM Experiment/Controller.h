@@ -6,6 +6,7 @@
 namespace Experiment {
 
 	using Microsoft::WRL::ComPtr;
+	using Clock = std::chrono::high_resolution_clock;
 
 	struct DuoView
 	{
@@ -27,9 +28,11 @@ namespace Experiment {
 
 		[[nodiscard]] SingleView SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const;
 
-		bool GetResponse(DirectX::GamePad* gamePad, DirectX::GamePad::State state);
+		bool GetResponse(DirectX::GamePad::State state);
 
-		std::chrono::time_point<std::chrono::system_clock> last_time;
+		long long DeltaSeconds() const;
+		void ResetTimer();
+
 		int m_currentImageIndex = 0;
 		bool m_startButtonHasBeenPressed = false;
 
@@ -45,6 +48,7 @@ namespace Experiment {
 
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
+		std::chrono::steady_clock::time_point m_start;
 	};
 
 }

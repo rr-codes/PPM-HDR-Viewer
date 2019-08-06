@@ -65,7 +65,7 @@
 #include <vector>
 
 #define NUMBER_OF_WINDOWS 2
-//#define FULLSCREEN
+#define FULLSCREEN
 
 // convenience typealiases
 

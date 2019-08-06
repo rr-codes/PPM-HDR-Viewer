@@ -20,7 +20,7 @@ namespace Experiment {
 		return cropped;
 	}
 
-	bool Controller::GetResponse(DirectX::GamePad* gamePad, DirectX::GamePad::State state)
+	bool Controller::GetResponse(DirectX::GamePad::State state)
 	{
 		using Button = DirectX::GamePad::ButtonStateTracker;
 
@@ -32,40 +32,54 @@ namespace Experiment {
 		if (m_buttons.a == Button::PRESSED || m_buttons.b == Button::PRESSED)
 		{
 			m_startButtonHasBeenPressed = true;
+			ResetTimer();
 			return false;
 		}
 
 		if (right != Button::PRESSED && left != Button::PRESSED)
 		{
-			gamePad->SetVibration(0, 0, 0);
 			return false;
 		}
 
-		gamePad->SetVibration(0, 1.0, 1.0);
 
 		if (!m_startButtonHasBeenPressed)
 		{
 			return false;
 		}
 
-		const std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - last_time;
+		const auto elapsed = DeltaSeconds();
 
-		const auto response = Experiment::Response{
+		const auto response = Response{
 			(right == Button::PRESSED) ? Right : Left,
-			elapsed_seconds.count()
+			elapsed
 		};
 
 		m_trial.responses.push_back(response);
 		
 		if (m_currentImageIndex + 1 >= static_cast<int>(m_trial.questions.size()))
 		{
-			m_trial.ExportResults(R"(C:\Users\Richard\Desktop\result)" + m_trial.id + ".csv");
+			m_trial.ExportResults("result" + m_trial.id + ".csv");
 
 			exit(0);
 			return false;
 		}
 
 		return true;
+	}
+
+	long long Controller::DeltaSeconds() const
+	{
+		const auto t = Clock::now();
+		const auto t0 = m_start;
+
+		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - t0).count();
+		return duration;
+	}
+
+	void Controller::ResetTimer()
+	{
+		Debug::Console::log("\nTimer reset\n");
+		m_start = Clock::now();
 	}
 
 	ComPtr<ID3D11ShaderResourceView> Controller::ConvertImageToResource(const std::filesystem::path& image, Region* region) const
@@ -141,9 +155,9 @@ namespace Experiment {
 		const auto start = m_trial.folderPath + "/" + question.image_name;
 		std::vector<std::string> files = {
 			start + "_L_dec.ppm",
-			start + "_L.ppm",
+			start + "_L_orig.ppm",
 			start + "_R_dec.ppm",
-			start + "_R.ppm"
+			start + "_R_orig.ppm"
 		};
 
 		std::vector<ComPtr<ID3D11ShaderResourceView>> views;

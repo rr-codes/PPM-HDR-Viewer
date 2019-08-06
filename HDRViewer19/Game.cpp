@@ -17,14 +17,14 @@ using Microsoft::WRL::ComPtr;
  * Sets the rate at which to alternate between the images (i.e, there are `rate` seconds between the original and decompressed)
  * For stereo, every `rate` seconds, the two windows' frames are rendered, one before the other, and then they are presented, one before the other
  */
-static float rate = 1.0f;
+static float rate = 0.1f;
 
 
 Game::Game(const std::wstring& folderPath, bool flicker, bool stereo) noexcept(false)
 {
 	m_numberOfWindows = stereo ? 2 : 1;
-	m_files = getFiles(folderPath);
 	m_flickerEnable = flicker;
+	m_files = getFiles(folderPath);
 
 	m_deviceResources = std::make_unique<DX::DeviceResources>(
 		m_numberOfWindows, 
@@ -101,10 +101,8 @@ void Game::OnArrowKeyDown(WPARAM key)
 
 void Game::OnEscapeKeyDown()
 {
-	for (int i = 0; i < m_numberOfWindows; i++)
-	{
-		m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
-	}
+	m_deviceResources.reset();
+	OnDeviceLost();
 
 	exit(0);
 }
@@ -367,7 +365,6 @@ matrix<std::string> Game::getFiles(const std::wstring& folder)
 {
 	matrix<std::string> folder_vector;
 	std::vector<std::string> files;
-
 
 	auto path = std::filesystem::path(folder);
 

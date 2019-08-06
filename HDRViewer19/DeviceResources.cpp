@@ -463,12 +463,15 @@ void DX::DeviceResources::ThreadPresent()
 		return;
 	}
 
-	std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
-	std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
+	//std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
+	//std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
 
 
-	one.join();
-	two.join();
+	//one.join();
+	//two.join();
+
+	m_swapChain[0]->Present(1, 0);
+	m_swapChain[1]->Present(1, 0);
 }
 
 // CleanFrame the contents of the swap chain to the screen.
@@ -513,22 +516,23 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
+	auto flipped = m_numWindows == 1 ? i : 1 - i;
+
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 	
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(flipped, output.GetAddressOf());
 	ThrowIfFailed(hr);
 
 	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
 
 	if  (FAILED(hr))
 	{
-		ThrowIfFailed(hr);
-		exit(1);
+		Debug::Console::FatalError("Fullscreen error");
 	}
 	
-	UpdateColorSpace(i);
+	UpdateColorSpace(flipped);
 	CreateWindowSizeDependentResources();
 }
 

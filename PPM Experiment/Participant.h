@@ -14,6 +14,8 @@ namespace Experiment {
 	struct Region
 	{
 		int x = 0, y = 0, w = 0, h = 0;
+
+		friend std::ostream& operator<<(std::ostream& os, const Region& r);
 	};
 
 	struct Question
@@ -21,12 +23,16 @@ namespace Experiment {
 		std::string image_name = "";
 		Option correct_option = Option::Left;
 		Region region = { };
+
+		friend std::ostream& operator<<(std::ostream& os, const Question& q);
 	};
 
 	struct Response
 	{
 		Option user_answer = Option::Left;
-		double duration = 1.0;
+		long long duration = 1;
+
+		friend 	std::ostream& operator<<(std::ostream& os, const Response& r);
 	};
 
 	struct Trial
@@ -39,13 +45,16 @@ namespace Experiment {
 		std::vector<Question> questions = {};
 		std::vector<Response> responses = {};
 
-		static Trial CreateTrial(const std::filesystem::path& configPath, const std::string& id);
+		static Trial CreateTrial(const std::filesystem::path& configPath);
 
 		void ExportResults(const std::filesystem::path& path) const;
 
 		friend std::ostream& operator<<(std::ostream& os, const Trial& t);
 	};
 
+	std::ostream& operator<<(std::ostream& os, const Region& r);
+	std::ostream& operator<<(std::ostream& os, const Question& q);
+	std::ostream& operator<<(std::ostream& os, const Response& r);
 	std::ostream& operator<<(std::ostream& os, const Trial& t);
 
 	void from_json(const nlohmann::json& j, Region& r);

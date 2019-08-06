@@ -1,0 +1,5 @@
+ID	Image	Correct	Crop Region	Answer	Time
+1	color	1	100 200 1000 1100	2	7.083
+1	cave4	2	100 200 1200 1100	2	2.018
+1	wolfman2	2	100 200 1200 1100	2	22.425
+

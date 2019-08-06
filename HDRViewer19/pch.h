@@ -69,6 +69,55 @@ using matrix = std::vector<std::vector<T>>;
 #ifdef _DEBUG
 #include <dxgidebug.h>
 #endif
+namespace Debug
+{
+	class Console {
+	public:
+		static bool contains(std::string str, std::string substr)
+		{
+			return str.find(substr) != std::string::npos;
+		}
+
+		static void FatalError(const std::string& message)
+		{
+			const auto result = MessageBoxA(
+				nullptr,
+				message.c_str(),
+				"Fatal Error",
+				MB_OK | MB_ICONERROR | MB_TOPMOST
+			);
+
+			if (result == IDOK)
+			{
+				exit(1);
+			}
+		}
+
+		static void log(const char* format, ...)
+		{
+			char buf[1024];
+			va_list args;
+			va_start(args, format);
+
+			vsprintf_s(buf, format, args);
+
+			va_end(args);
+			OutputDebugStringA(buf);
+		}
+
+		static void log(const wchar_t* format, ...)
+		{
+			wchar_t buf[2048];
+			va_list args;
+			va_start(args, format);
+
+			vswprintf(buf, sizeof(buf), format, args);
+
+			va_end(args);
+			OutputDebugStringW(buf);
+		}
+	};
+}
 
 namespace DX
 {

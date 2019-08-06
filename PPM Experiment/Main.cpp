@@ -22,7 +22,7 @@ using string_ref = const std::string &;
 
 namespace
 {
-	std::unique_ptr<Game> g_game;
+	std::unique_ptr<Experiment::Game> g_game;
 };
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -62,16 +62,11 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		0
 	);
 
-	const auto id = tinyfd_inputBox(
-		"Enter Participant ID", 
-		"Enter Participant ID", 
-		"-1"
-	);
+	const std::wstring empty;
+	if (file == empty.c_str()) exit(0);
 
-	if (file == nullptr || id == "") exit(0);
-
-	auto trial = Experiment::Trial::CreateTrial(file, id);
-	g_game = std::make_unique<Game>(trial);
+	auto trial = Experiment::Trial::CreateTrial(file);
+	g_game = std::make_unique<Experiment::Game>(trial);
 
 	RECT rc;
 
@@ -93,7 +88,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			wcex.lpfnWndProc = WndProc;
 			wcex.hInstance = hInstance;
 			wcex.hIcon = LoadIconW(hInstance, L"IDI_ICON");
-			wcex.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+			wcex.hCursor = LoadCursorW(nullptr, IDC_CROSS);
 			wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 			wcex.lpszClassName = name;
 			wcex.hIconSm = LoadIconW(wcex.hInstance, L"IDI_ICON");
@@ -170,7 +165,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (windows[i] == hWnd) wndIndex = i;
 	}
 
-	auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	auto game = reinterpret_cast<Experiment::Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
 	switch (message)
 	{

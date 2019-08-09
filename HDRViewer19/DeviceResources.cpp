@@ -475,7 +475,7 @@ void DX::DeviceResources::ThreadPresent()
 }
 
 // CleanFrame the contents of the swap chain to the screen.
-void DX::DeviceResources::CleanFrame(int i)
+void DX::DeviceResources::DiscardView(int i)
 {
 	//auto hr = m_swapChain[i]->Present(1, 0);
 	
@@ -516,7 +516,8 @@ void DX::DeviceResources::CleanFrame(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
-	auto flipped = m_numWindows == 1 ? i : 1 - i;
+	//auto flipped = m_numWindows == 1 ? i : 1 - i;
+	auto flipped = i;
 
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());

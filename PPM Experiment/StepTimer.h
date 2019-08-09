@@ -85,6 +85,11 @@ namespace DX
 			m_qpcSecondCounter = 0;
 		}
 
+		void Reset()
+		{
+			m_totalTicks = 0;
+		}
+
 		// Update timer state, calling the specified Update function the appropriate number of times.
 		template<typename TUpdate>
 		void Tick(const TUpdate& update)

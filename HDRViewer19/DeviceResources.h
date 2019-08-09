@@ -42,7 +42,7 @@ namespace DX
 		void HandleDeviceLost();
 		void ThreadPresent();
 		void RegisterDeviceNotify(IDeviceNotify* deviceNotify) { m_deviceNotify = deviceNotify; }
-		void CleanFrame(int i);
+		void DiscardView(int i);
 
 		// Device Accessors.
 		RECT GetOutputSize() const { return m_outputSize; }

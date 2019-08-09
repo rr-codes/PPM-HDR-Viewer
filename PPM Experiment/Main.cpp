@@ -65,8 +65,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	const std::wstring empty;
 	if (file == empty.c_str()) exit(0);
 
-	auto trial = Experiment::Trial::CreateTrial(file);
-	g_game = std::make_unique<Experiment::Game>(trial);
+	auto run = Experiment::Run::CreateRun(file);
+	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;
 

@@ -9,55 +9,52 @@
 #include <filesystem>
 
 namespace Experiment {
-	enum Option { Left = 1, Right = 2 };
+	enum Option { None = 0, Left = 1, Right = 2 };
+	enum Mode { Stereo = 0, Mono_Left = 1, Mono_Right = 2 };
 
-	struct Region
+	struct Vector
 	{
-		int x = 0, y = 0, w = 0, h = 0;
+		int x = 0, y = 0;
 
-		friend std::ostream& operator<<(std::ostream& os, const Region& r);
-	};
-
-	struct Question
-	{
-		std::string image_name = "";
-		Option correct_option = Option::Left;
-		Region region = { };
-
-		friend std::ostream& operator<<(std::ostream& os, const Question& q);
-	};
-
-	struct Response
-	{
-		Option user_answer = Option::Left;
-		long long duration = 1;
-
-		friend 	std::ostream& operator<<(std::ostream& os, const Response& r);
+		friend std::ostream& operator<<(std::ostream& os, const Vector& v);
 	};
 
 	struct Trial
 	{
-		std::string folderPath = "";
-		std::string id = "0";
-		float flicker_rate = 1.0f;
-		int distance = 100;
+		std::string imageName = "";
+		Option correctOption = Option::None;
 
-		std::vector<Question> questions = {};
-		std::vector<Response> responses = {};
+		Vector position = {};
+		Mode mode = Mode::Stereo;
 
-		static Trial CreateTrial(const std::filesystem::path& configPath);
-
-		void ExportResults(const std::filesystem::path& path) const;
+		Option participantResponse = None;
+		double duration = 0.0;
 
 		friend std::ostream& operator<<(std::ostream& os, const Trial& t);
 	};
 
-	std::ostream& operator<<(std::ostream& os, const Region& r);
-	std::ostream& operator<<(std::ostream& os, const Question& q);
-	std::ostream& operator<<(std::ostream& os, const Response& r);
-	std::ostream& operator<<(std::ostream& os, const Trial& t);
+	struct Run
+	{
+		std::string id = "";
+		std::string folderPath = "";
 
-	void from_json(const nlohmann::json& j, Region& r);
-	void from_json(const nlohmann::json& j, Question& q);
+		int width = 0, height = 0;
+		int distance = 0;
+
+		std::vector<Trial> trials = {};
+
+		static Run CreateRun(const std::filesystem::path& configPath);
+		void Export(const std::filesystem::path& path) const;
+
+		friend std::ostream& operator<<(std::ostream& os, const Run& r);
+	};
+
+	std::ostream& operator<<(std::ostream& os, const Vector& r);
+	std::ostream& operator<<(std::ostream& os, const Trial& t);
+	std::ostream& operator<<(std::ostream& os, const Run& r);
+
+	void from_json(const nlohmann::json& j, Vector& v);
 	void from_json(const nlohmann::json& j, Trial& t);
+	void from_json(const nlohmann::json& j, Run& r);
+
 }

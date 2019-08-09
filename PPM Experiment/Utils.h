@@ -46,6 +46,11 @@ namespace Utils
 			FatalError("Index of Duo Out of Bounds");
 			return left;
 		}
+
+		Duo flipped()
+		{
+			return Duo(right, left);
+		}
 	};
 }
 
@@ -84,6 +89,11 @@ namespace Debug
 {
 	class Console {
 	public:
+		static void log(const std::string& s)
+		{
+			OutputDebugStringA(s.c_str());
+		}
+
 		static void log(const char* format, ...)
 		{
 			char buf[1024];

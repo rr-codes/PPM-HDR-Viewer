@@ -42,8 +42,8 @@ namespace DX
 		bool WindowSizeChanged(int i, int width, int height);
 		void HandleDeviceLost();
 		void ThreadPresent();
+		void DiscardView(int i);
 		void RegisterDeviceNotify(IDeviceNotify* deviceNotify) { m_deviceNotify = deviceNotify; }
-		void CleanFrame(int i);
 
 		// Device Accessors.
 		RECT GetOutputSize() const { return m_outputSize; }
@@ -136,5 +136,6 @@ namespace DX
 		int m_numWindows;
 
 		DirectX::SimpleMath::Vector2 dimensions;
+
 	};
 }

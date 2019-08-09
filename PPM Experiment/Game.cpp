@@ -10,12 +10,14 @@
 #include <fstream>
 #include <utility>
 #include "Controller.h"
+#include "Stopwatch.h"
 
 extern void ExitGame();
 
 namespace Experiment {
+	constexpr float FLICKER_RATE = 0.1f;
 
-	Game::Game(Trial trial) noexcept(false) : m_trial(std::move(trial))
+	Game::Game(Run run) noexcept(false) : m_run(std::move(run))
 	{
 		m_deviceResources = std::make_unique<DX::DeviceResources>(
 			NUMBER_OF_WINDOWS,
@@ -24,11 +26,11 @@ namespace Experiment {
 			2,
 			D3D_FEATURE_LEVEL_10_0,
 			DX::DeviceResources::c_EnableHDR
-			);
+		);
 
 		m_deviceResources->RegisterDeviceNotify(this);
 
-		m_controller = new Controller(m_trial, m_deviceResources.get());
+		m_controller = new Controller(m_run, m_deviceResources.get());
 
 		m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
 		m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
@@ -38,7 +40,6 @@ namespace Experiment {
 		}
 
 	}
-
 
 	// Initialize the Direct3D resources required to run.
 	void Game::Initialize(HWND windows[], int width, int height)
@@ -61,24 +62,27 @@ namespace Experiment {
 			m_deviceResources->GoFullscreen(i);
 		}
 
-		m_stereoViews = m_controller->SetFlickerStereoViews(m_trial.questions[0]);
-
+		m_stereoViews = m_controller->SetFlickerStereoViews(m_run.trials[0]);
 
 		const auto dir = std::filesystem::current_path().generic_string() + "/response/";
 
 		const auto stereo = m_controller->SetStaticStereoView({
-			dir + "responsescreen_L.ppm",
-			dir + "responsescreen_R.ppm"
+			dir + "responsescreen_R.ppm",
+			dir + "responsescreen_L.ppm"
+		});
+
+		m_responseView = m_controller->SetStaticStereoView({
+			dir + "responsescreen_R.ppm",
+			dir + "responsescreen_L.ppm"
 			});
 
 		m_timer.SetFixedTimeStep(true);
-		m_timer.SetTargetElapsedSeconds(m_trial.flicker_rate);
+		m_timer.SetTargetElapsedSeconds(FLICKER_RATE);
 
 		m_frameTimer.SetFixedTimeStep(true);
 		m_frameTimer.SetTargetElapsedSeconds(1.0f / 60.0f);
 
-		RenderStereo(stereo);
-
+		Render(stereo);
 	}
 
 #pragma region Frame Update
@@ -98,6 +102,8 @@ namespace Experiment {
 			m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
 		}
 
+		m_deviceResources.reset();
+		ExitGame();
 		exit(0);
 	}
 
@@ -110,56 +116,50 @@ namespace Experiment {
 		auto shouldGoToNextImage = m_controller->GetResponse(state);
 		if (shouldGoToNextImage)
 		{
-			auto q = m_trial.questions[++m_controller->m_currentImageIndex];
+			auto q = m_run.trials[++m_controller->m_currentImageIndex];
 			m_stereoViews = m_controller->SetFlickerStereoViews(q);
 
-			m_controller->ResetTimer();
+			m_controller->GetCounter()->Reset();
 		}
 	}
 
 	// Updates the world.
 	void Game::Update(DX::StepTimer const& timer)
 	{
+		m_controller->GetCounter()->Tick();
+
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
 			return;
 		}
 
-		RenderStereo(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
-
-		m_shouldFlicker = !m_shouldFlicker;
+		Debug::Console::log("\n" + std::to_string(m_controller->GetCounter()->Elapsed()));
+		if (m_controller->GetCounter()->Elapsed() > 8.0)
+		{
+			Render(m_responseView);
+		}
+		else
+		{
+			Render(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
+			m_shouldFlicker = !m_shouldFlicker;
+		}
 	}
 #pragma endregion
 
-	void Game::RenderStereo(const DuoView& duo_view)
+	void Game::Render(const DuoView& duo_view)
 	{
-		Render([=](int i, DirectX::SpriteBatch* spriteBatch)
-		{
-			spriteBatch->Draw(duo_view.views[i].left.Get(), duo_view.positions.left);
-			spriteBatch->Draw(duo_view.views[i].right.Get(), duo_view.positions.right);
-		});
-	}
+		auto context = m_deviceResources->GetD3DDeviceContext();
 
-	void Game::RenderStereo(const SingleView& single_view)
-	{
-		Render([=](int i, DirectX::SpriteBatch* spriteBatch)
-		{
-			spriteBatch->Draw(single_view[i].Get(), DirectX::SimpleMath::Vector2{ 0, 0 });
-		});
-	}
-
-	void Game::Render(DrawFunction func)
-	{
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 		{
 			Clear(i);
 
 			m_deviceResources->PIXBeginEvent(L"Render");
-			auto context = m_deviceResources->GetD3DDeviceContext();
 
 			m_spriteBatch->Begin();
 
-			func(i, m_spriteBatch.get());
+			m_spriteBatch->Draw(duo_view.views[i].left.Get(), duo_view.positions.left);
+			m_spriteBatch->Draw(duo_view.views[i].right.Get(), duo_view.positions.right);
 
 			m_spriteBatch->End();
 
@@ -169,16 +169,51 @@ namespace Experiment {
 			context->OMSetRenderTargets(1, &renderTarget, nullptr);
 
 			m_toneMap[i]->Process(context);
-
-			ID3D11ShaderResourceView* nullsrv[] = { nullptr };
-			context->PSSetShaderResources(0, 1, nullsrv);
 		}
+
+		ID3D11ShaderResourceView* nullsrv[] = { nullptr };
+		context->PSSetShaderResources(0, 1, nullsrv);
 
 		m_deviceResources->ThreadPresent();
 
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 		{
-			m_deviceResources->CleanFrame(i);
+			m_deviceResources->DiscardView(i);
+		}
+	}
+
+	void Game::Render(const SingleView& single_view)
+	{
+		auto context = m_deviceResources->GetD3DDeviceContext();
+
+		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+		{
+			Clear(i);
+
+			m_deviceResources->PIXBeginEvent(L"Render");
+
+			m_spriteBatch->Begin();
+			
+			m_spriteBatch->Draw(single_view[i].Get(), DirectX::SimpleMath::Vector2{ 0, 0 });
+
+			m_spriteBatch->End();
+
+			m_deviceResources->PIXEndEvent();
+
+			auto renderTarget = m_deviceResources->GetRenderTargetView(i);
+			context->OMSetRenderTargets(1, &renderTarget, nullptr);
+
+			m_toneMap[i]->Process(context);
+		}
+
+		ID3D11ShaderResourceView* nullsrv[] = { nullptr };
+		context->PSSetShaderResources(0, 1, nullsrv);
+
+		m_deviceResources->ThreadPresent();
+
+		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+		{
+			m_deviceResources->DiscardView(i);
 		}
 	}
 

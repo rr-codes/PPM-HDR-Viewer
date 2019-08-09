@@ -120,7 +120,7 @@ void Game::Update(DX::StepTimer const& timer)
 
 	for (int i = 0; i < m_numberOfWindows; i++)
 	{
-		m_deviceResources->CleanFrame(i);
+		m_deviceResources->DiscardView(i);
 	}
 }
 #pragma endregion

@@ -343,6 +343,7 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 		ThrowIfFailed(m_swapChain[i]->GetBuffer(0, IID_PPV_ARGS(m_renderTarget[i].ReleaseAndGetAddressOf())));
 
 		CD3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc(D3D11_RTV_DIMENSION_TEXTURE2D, m_backBufferFormat);
+
 		ThrowIfFailed(m_d3dDevice->CreateRenderTargetView(
 			m_renderTarget[i].Get(),
 			&renderTargetViewDesc,
@@ -426,8 +427,6 @@ void DX::DeviceResources::HandleDeviceLost()
 	m_d3dDepthStencilView.Reset();
 	m_depthStencil.Reset();
 
-
-
 	for (int i = 0; i < m_numWindows; i++)
 	{
 		m_d3dRenderTargetView[i].Reset();
@@ -462,21 +461,14 @@ void DX::DeviceResources::HandleDeviceLost()
 
 void DX::DeviceResources::ThreadPresent()
 {
-	if constexpr (NUMBER_OF_WINDOWS == 2) {
-		std::thread one([&]() { m_swapChain[0]->Present(1, 0); });
-		std::thread two([&]() { m_swapChain[1]->Present(1, 0); });
-
-		one.join();
-		two.join();
-	}
-	else
+	for (int i = 0; i < m_numWindows; i++)
 	{
-		m_swapChain[0]->Present(1, 0);
+		m_swapChain[i]->Present(1, 0);
 	}
 }
 
-// CleanFrame the contents of the swap chain to the screen.
-void DX::DeviceResources::CleanFrame(int i)
+// DiscardView the contents of the swap chain to the screen.
+void DX::DeviceResources::DiscardView(int i)
 {
 	//auto hr = m_swapChain[i]->Present(1, 0);
 
@@ -521,8 +513,10 @@ void DX::DeviceResources::GoFullscreen(int i)
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 
+	auto flipped = i;
+
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(i, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(flipped, output.GetAddressOf());
 
 	if (FAILED(hr))
 	{
@@ -536,7 +530,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 		Utils::FatalError("Cannot go fullscreen for index " + i);
 	}
 
-	UpdateColorSpace(i);
+	UpdateColorSpace(flipped);
 	CreateWindowSizeDependentResources();
 #endif
 }

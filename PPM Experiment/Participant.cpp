@@ -6,37 +6,41 @@ namespace Experiment
 {
 	static const std::string delim = "\t";
 
-	std::ostream& operator<<(std::ostream& os, const Region& r)
+	std::ostream& operator<<(std::ostream& os, const Vector& r)
 	{
-		os << r.x << " " << r.y << " " << r.w << " " << r.h;
+		os << r.x << " " << r.y;
 		return os;
 	}
 
-	std::ostream& operator<<(std::ostream& os, const Question& q)
-	{
-		os << q.image_name << delim << q.correct_option << delim << q.region;
-		return os;
-	}
-
-	std::ostream& operator<<(std::ostream& os, const Response& r)
-	{
-		const auto time = static_cast<double>(r.duration) / 1000.0;
-		os << r.user_answer << delim << time;
-		return os;
-	}
-
-	/// [Id] [image] [correct] [region] [answer] [time]
 	std::ostream& operator<<(std::ostream& os, const Trial& t)
 	{
-		for (unsigned int i = 0; i < t.responses.size(); ++i)
+		os << t.imageName << ", " 
+			<< t.correctOption << ", "
+			<< t.position << ", " 
+			<< t.mode << ", " 
+			<< t.participantResponse << ", " 
+			<< t.duration;
+
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Run& r)
+	{
+		os << r.id << ", " 
+			<< r.folderPath << ", " 
+			<< r.distance << ", " 
+			<< r.width << ", "
+			<< r.height << "\n";
+
+		for (auto& trial : r.trials)
 		{
-			os << t.id << delim << t.questions[i] << delim << t.responses[i] << "\n";
+			os << trial << "\n";
 		}
 
 		return os;
 	}
 
-	void Trial::ExportResults(const std::filesystem::path& path) const
+	void Run::Export(const std::filesystem::path& path) const
 	{
 		std::ofstream file(path.generic_string());
 
@@ -46,48 +50,49 @@ namespace Experiment
 		file.close();
 	}
 
-	void from_json(const nlohmann::json& j, Region& r)
+	void from_json(const nlohmann::json& j, Vector& v)
 	{
-		j.at("x").get_to(r.x);
-		j.at("y").get_to(r.y);
-		j.at("w").get_to(r.w);
-		j.at("h").get_to(r.h);
-	}
-
-	void from_json(const nlohmann::json& j, Question& q)
-	{
-		j.at("image").get_to<std::string>(q.image_name);
-		j.at("answer").get_to<Option>(q.correct_option);
-		j.at("dimensions").get_to<Region>(q.region);
+		j.at("x").get_to(v.x);
+		j.at("y").get_to(v.y);
 	}
 
 	void from_json(const nlohmann::json& j, Trial& t)
 	{
-		j.at("id").get_to(t.id);
-		j.at("folder path").get_to(t.folderPath);
-		j.at("flicker rate").get_to(t.flicker_rate);
-		j.at("distance").get_to<int>(t.distance);
+		j.at("image name").get_to<std::string>(t.imageName);
+		j.at("position").get_to<Vector>(t.position);
+		j.at("viewing mode").get_to<Mode>(t.mode);
+		j.at("correct option").get_to<Option>(t.correctOption);
+	}
 
-		j.at("questions").get_to<std::vector<Question>>(t.questions);
+	void from_json(const nlohmann::json& j, Run& r)
+	{
+		j.at("participant id").get_to<std::string>(r.id);
+		j.at("image folder").get_to<std::string>(r.folderPath);
+
+		j.at("distance").get_to(r.distance);
+		j.at("image width").get_to(r.width);
+		j.at("image height").get_to(r.height);
+
+		j.at("trials").get_to<std::vector<Trial>>(r.trials);
 	}
 
 	/// Sample JSON Config file:
 	/// <code>
 	/// {
 	///		"id" : user42
-	///		"folder path" : "C:/Users/lab/Desktop/colors",
-	///		"flicker rate" : 1.0,
+	///		"image folder" : "C:/Users/lab/Desktop/colors",
 	///		"distance" : 500,
-	///		"questions" : [
+	///		"image width" : 1200,
+	///		"image height" : 1000,
+	///		"trials" : [
 	///			{
 	///				"image": "red",
-	///				"answer" : 1,
-	///				"dimensions" : {
+	///				"correct option" : 1,
+	///				"position" : {
 	///					"x" : 100,
-	///					"y" : 200,
-	///					"w" : 500,
-	///					"h" : 600
-	///				}
+	///					"y" : 200
+	///				},
+	///				"viewing mode" : 0
 	///			},
 	///			{
 	///			...
@@ -95,7 +100,7 @@ namespace Experiment
 	///		]
 	///	}
 	///	</code>
-	Trial Trial::CreateTrial(const std::filesystem::path& configPath)
+	Run Run::CreateRun(const std::filesystem::path& configPath)
 	{
 		std::ifstream file(configPath);
 		nlohmann::json json;
@@ -104,7 +109,7 @@ namespace Experiment
 		file.close();
 
 		try {
-			auto trial = json.get<Experiment::Trial>();
+			auto trial = json.get<Experiment::Run>();
 			return trial;
 		} catch (std::exception& e)
 		{

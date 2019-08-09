@@ -2,11 +2,12 @@
 #include <wrl/client.h>
 #include "DeviceResources.h"
 #include <GamePad.h>
+#include "Stopwatch.h"
+#include "StepTimer.h"
 
 namespace Experiment {
 
 	using Microsoft::WRL::ComPtr;
-	using Clock = std::chrono::high_resolution_clock;
 
 	struct DuoView
 	{
@@ -18,37 +19,34 @@ namespace Experiment {
 
 	using SingleView = Utils::Duo<ComPtr<ID3D11ShaderResourceView>>;
 
-
 	class Controller
 	{
 	public:
-		Controller(Trial trial, DX::DeviceResources* deviceResources);
+		Controller(Run run, DX::DeviceResources* deviceResources);
 
-		[[nodiscard]] std::pair<DuoView, DuoView> SetFlickerStereoViews(const Question& question) const;
+		[[nodiscard]] std::pair<DuoView, DuoView> SetFlickerStereoViews(const Trial& trial) const;
 
 		[[nodiscard]] SingleView SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const;
 
 		bool GetResponse(DirectX::GamePad::State state);
 
-		long long DeltaSeconds() const;
-		void ResetTimer();
+		Utils::Counter* GetCounter() { return m_counter.get(); }
 
 		int m_currentImageIndex = 0;
 		bool m_startButtonHasBeenPressed = false;
 
-
 	private:
 		[[nodiscard]] ComPtr<ID3D11ShaderResourceView> ConvertImageToResource(
 			const std::filesystem::path& image,
-			Region* region
+			Vector* region
 		) const;
 
 		DX::DeviceResources* m_deviceResources;
-		Experiment::Trial m_trial;
+		Experiment::Run m_run;
 
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
-		std::chrono::steady_clock::time_point m_start;
+		std::unique_ptr<Utils::Counter> m_counter;
 	};
 
 }

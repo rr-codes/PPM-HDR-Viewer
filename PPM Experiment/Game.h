@@ -21,10 +21,8 @@ namespace Experiment {
 	// provides a game loop.
 	class Game final : public DX::IDeviceNotify
 	{
-		using DrawFunction = const std::function<void(int, DirectX::SpriteBatch*)> &;
-
 	public:
-		Game(Trial trial) noexcept(false);
+		Game(Run run) noexcept(false);
 
 		// Initialization and management
 		void Initialize(HWND windows[], int width, int height);
@@ -54,9 +52,8 @@ namespace Experiment {
 
 		void Update(DX::StepTimer const& timer);
 
-		void Render(DrawFunction func);
-		void RenderStereo(const DuoView& duo_view);
-		void RenderStereo(const SingleView& single_view);
+		void Render(const DuoView& duo_view);
+		void Render(const SingleView& single_view);
 
 
 		void CreateDeviceDependentResources();
@@ -80,11 +77,12 @@ namespace Experiment {
 		std::unique_ptr<DirectX::GamePad>  m_gamePad;
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
-		Trial m_trial;
+		Run m_run;
 		Controller* m_controller;
 
 
 		std::pair<DuoView, DuoView> m_stereoViews;
+		SingleView m_responseView;
 	};
 
 }

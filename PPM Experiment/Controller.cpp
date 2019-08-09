@@ -2,11 +2,12 @@
 #include <utility>
 
 namespace Experiment {
-
-	Controller::Controller(Trial trial, DX::DeviceResources* deviceResources)
+	
+	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
 	{
-		this->m_trial = std::move(trial);
+		this->m_run = std::move(run);
 		this->m_deviceResources = deviceResources;
+		this->m_counter = std::make_unique<Utils::Counter>(0.1);
 	}
 
 
@@ -32,7 +33,7 @@ namespace Experiment {
 		if (m_buttons.a == Button::PRESSED || m_buttons.b == Button::PRESSED)
 		{
 			m_startButtonHasBeenPressed = true;
-			ResetTimer();
+			m_counter->Reset();
 			return false;
 		}
 
@@ -47,18 +48,12 @@ namespace Experiment {
 			return false;
 		}
 
-		const auto elapsed = DeltaSeconds();
-
-		const auto response = Response{
-			(right == Button::PRESSED) ? Right : Left,
-			elapsed
-		};
-
-		m_trial.responses.push_back(response);
+		m_run.trials[m_currentImageIndex].participantResponse = (left == Button::PRESSED) ? Right : Left;
+		m_run.trials[m_currentImageIndex].duration = m_counter->Elapsed();
 		
-		if (m_currentImageIndex + 1 >= static_cast<int>(m_trial.questions.size()))
+		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
-			m_trial.ExportResults("result" + m_trial.id + ".csv");
+			m_run.Export("result" + m_run.id + ".csv");
 
 			exit(0);
 			return false;
@@ -67,22 +62,7 @@ namespace Experiment {
 		return true;
 	}
 
-	long long Controller::DeltaSeconds() const
-	{
-		const auto t = Clock::now();
-		const auto t0 = m_start;
-
-		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t - t0).count();
-		return duration;
-	}
-
-	void Controller::ResetTimer()
-	{
-		Debug::Console::log("\nTimer reset\n");
-		m_start = Clock::now();
-	}
-
-	ComPtr<ID3D11ShaderResourceView> Controller::ConvertImageToResource(const std::filesystem::path& image, Region* region) const
+	ComPtr<ID3D11ShaderResourceView> Controller::ConvertImageToResource(const std::filesystem::path& image, Vector* region) const
 	{
 		if (!is_regular_file(image))
 		{
@@ -101,7 +81,7 @@ namespace Experiment {
 
 		auto cropped = (region == nullptr) 
 			? matrix 
-			: CropMatrix(matrix, cv::Rect(region->x, region->y, region->w, region->h));
+			: CropMatrix(matrix, cv::Rect(region->x, region->y, m_run.width, m_run.height));
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;
@@ -150,14 +130,30 @@ namespace Experiment {
 	}
 
 
-	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Question& question) const
+	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
-		const auto start = m_trial.folderPath + "/" + question.image_name;
+		const auto start = m_run.folderPath + "/" + trial.imageName;
+		Utils::Duo<std::string> sidePrefixes = {};
+
+		switch (trial.mode)
+		{
+		case Mono_Left:
+			sidePrefixes = { "_L", "_L" };
+			break;
+
+		case Mono_Right:
+			sidePrefixes = { "_R", "_R" };
+			break;
+
+		case Stereo:
+			sidePrefixes = { "_L", "_R" };
+		}
+
 		std::vector<std::string> files = {
-			start + "_L_dec.ppm",
-			start + "_L_orig.ppm",
-			start + "_R_dec.ppm",
-			start + "_R_orig.ppm"
+			start + sidePrefixes.left  + "_dec.ppm",
+			start + sidePrefixes.left  + "_orig.ppm",
+			start + sidePrefixes.right + "_dec.ppm",
+			start + sidePrefixes.right + "_orig.ppm",
 		};
 
 		std::vector<ComPtr<ID3D11ShaderResourceView>> views;
@@ -166,18 +162,18 @@ namespace Experiment {
 		views.reserve(files.size());
 		for (auto& file : files)
 		{
-			auto region = question.region;
+			auto region = trial.position;
 			views.push_back(ConvertImageToResource(file, &region));
 		}
 
 		auto left = DirectX::SimpleMath::Vector2(
-			dims.x / 2 - static_cast<float>(m_trial.distance) / 2 - static_cast<float>(question.region.w),
-			dims.y / 2 - static_cast<float>(question.region.h) / 2
+			dims.x / 2 - m_run.distance / 2 - m_run.width,
+			dims.y / 2 - m_run.height / 2
 		);
 
 		auto right = DirectX::SimpleMath::Vector2(
-			dims.x / 2 + static_cast<float>(m_trial.distance) / 2,
-			dims.y / 2 - static_cast<float>(question.region.h) / 2
+			dims.x / 2 + m_run.distance / 2,
+			dims.y / 2 - m_run.height / 2
 		);
 
 		DuoView no_flicker = {};
@@ -189,7 +185,7 @@ namespace Experiment {
 		DuoView flicker = {};
 		flicker.positions = { left, right };
 
-		if (question.correct_option == Experiment::Left)
+		if (trial.correctOption == Experiment::Left)
 		{
 			flicker.views.left = { views[0], views[1] };
 			flicker.views.right = { views[2], views[3] };

@@ -1,5 +1,8 @@
 ID	Image	Correct	Crop Region	Answer	Time
-1	color	1	100 200 1000 1100	2	7.083
-1	cave4	2	100 200 1200 1100	2	2.018
-1	wolfman2	2	100 200 1200 1100	2	22.425
+1, C:\Users\lab\Desktop\All_compressed\KillerTestSet_RGB_444_bpc=10_bpp=04.0000_csc_bypass=off, 500, 1200, 1000
+bathroom8, 1, 500 1000, 0, 1, 8.8
+CrazyTown, 2, 0 0, 0, 1, 1.8
+Subway, 1, 2000 500, 1, 1, 1.6
+BigTree, 2, 0 0, 2, 1, 1.5
+brightercave, 1, 0 500, 0, 1, 4.5
 

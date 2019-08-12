@@ -4,11 +4,10 @@
 
 namespace Experiment
 {
-	static const std::string delim = "\t";
 
-	std::ostream& operator<<(std::ostream& os, const Vector& r)
+	std::ostream& operator<<(std::ostream& os, const Vector& v)
 	{
-		os << r.x << " " << r.y;
+		os << v.x << " " << v.y;
 		return os;
 	}
 
@@ -26,11 +25,7 @@ namespace Experiment
 
 	std::ostream& operator<<(std::ostream& os, const Run& r)
 	{
-		os << r.id << ", "
-			<< r.folderPath << ", "
-			<< r.distance << ", "
-			<< r.flickerRate << ", "
-			<< r.dimensions << "\n";
+		os << r.id << ", " << r.folderPath << "\n";
 
 		for (auto& trial : r.trials)
 		{
@@ -43,8 +38,6 @@ namespace Experiment
 	void Run::Export(const std::filesystem::path& path) const
 	{
 		std::ofstream file(path.generic_string());
-
-		file << "ID\tImage\tCorrect\tCrop Region\tAnswer\tTime\n";
 
 		file << *this << "\n";
 		file.close();
@@ -68,13 +61,6 @@ namespace Experiment
 	{
 		j.at("participant id").get_to<std::string>(r.id);
 		j.at("image folder").get_to<std::string>(r.folderPath);
-
-		j.at("flicker rate").get_to<float>(r.flickerRate);
-		j.at("time out").get_to<int>(r.timeOut);
-
-		j.at("distance").get_to(r.distance);
-		j.at("dimensions").get_to<Vector>(r.dimensions);
-
 		j.at("trials").get_to<std::vector<Trial>>(r.trials);
 	}
 

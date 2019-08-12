@@ -5,7 +5,6 @@
 #pragma once
 
 #include "DeviceResources.h"
-#include "StepTimer.h"
 #include "RenderTexture.h"
 #include "SpriteBatch.h"
 #include "GamePad.h"
@@ -53,7 +52,10 @@ namespace Experiment {
 
 		void Update();
 
+		/// This renders two seperate stereo images displayed concurrently given a DuoView
 		void Render(const DuoView& duo_view);
+
+		/// This renders a single fullscreen stereo image from a Duo of ShaderViews
 		void Render(const SingleView& single_view);
 
 		void CreateDeviceDependentResources();
@@ -64,8 +66,8 @@ namespace Experiment {
 
 		std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
-		std::unique_ptr<DX::RenderTexture>* m_hdrScene;
-		std::unique_ptr<DirectX::ToneMapPostProcess>* m_toneMap;
+		std::array<std::unique_ptr<DX::RenderTexture>, 2>			m_hdrScene;
+		std::array<std::unique_ptr<DirectX::ToneMapPostProcess>, 2>	m_toneMap;
 
 		bool m_shouldFlicker = false;
 

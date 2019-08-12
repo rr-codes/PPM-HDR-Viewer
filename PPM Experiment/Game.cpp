@@ -32,8 +32,8 @@ namespace Experiment
 
 		m_controller = new Controller(m_run, m_deviceResources.get());
 
-		m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
-		m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
+		// m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
+		// m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
 
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 			m_hdrScene[i] = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
@@ -110,8 +110,6 @@ namespace Experiment
 			m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
 		}
 
-		delete[] m_hdrScene;
-		delete[] m_toneMap;
 		delete m_controller;
 
 		m_spriteBatch.reset();

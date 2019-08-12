@@ -3,7 +3,6 @@
 #include "DeviceResources.h"
 #include <GamePad.h>
 #include "Stopwatch.h"
-#include "StepTimer.h"
 
 constexpr auto SUCCESS = L"Success3.wav";
 constexpr auto FAILURE = L"Error1.wav";

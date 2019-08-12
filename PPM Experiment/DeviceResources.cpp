@@ -58,10 +58,10 @@ DX::DeviceResources::DeviceResources(int numWindows, DXGI_FORMAT backBufferForma
 	m_deviceNotify(nullptr),
 	m_numWindows(numWindows)
 {
-	m_window = new HWND[m_numWindows];
-	m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[m_numWindows];
-	m_d3dRenderTargetView = new Microsoft::WRL::ComPtr<ID3D11RenderTargetView>[m_numWindows];
-	m_swapChain = new Microsoft::WRL::ComPtr<IDXGISwapChain1>[m_numWindows];
+	// m_window = new HWND[m_numWindows];
+	// m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[m_numWindows];
+	// m_d3dRenderTargetView = new Microsoft::WRL::ComPtr<ID3D11RenderTargetView>[m_numWindows];
+	// m_swapChain = new Microsoft::WRL::ComPtr<IDXGISwapChain1>[m_numWindows];
 }
 
 // Configures the Direct3D device, and stores handles to it and the device context.
@@ -69,17 +69,17 @@ void DX::DeviceResources::CreateDeviceResources()
 {
 	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-#if defined(_DEBUG)
-	if (SdkLayersAvailable())
-	{
-		// If the project is in a debug build, enable debugging via SDK Layers with this flag.
-		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-	}
-	else
-	{
-		OutputDebugStringA("WARNING: Direct3D Debug Device is not available\n");
-	}
-#endif
+// #if defined(_DEBUG)
+// 	if (SdkLayersAvailable())
+// 	{
+// 		// If the project is in a debug build, enable debugging via SDK Layers with this flag.
+// 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+// 	}
+// 	else
+// 	{
+// 		OutputDebugStringA("WARNING: Direct3D Debug Device is not available\n");
+// 	}
+// #endif
 
 	CreateFactory();
 
@@ -241,7 +241,7 @@ void DX::DeviceResources::CreateDeviceResources()
 // These resources need to be recreated every time the window size is changed.
 void DX::DeviceResources::CreateWindowSizeDependentResources()
 {
-	if (!m_window)
+	if (m_window[0] == nullptr)
 	{
 		throw std::exception("Call SetWindow with a valid Win32 window handle");
 	}
@@ -666,7 +666,7 @@ void DX::DeviceResources::UpdateColorSpace(int i)
 
 	m_colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
 
-	if (m_swapChain == nullptr)
+	if (m_swapChain[i] == nullptr)
 	{
 		return;
 	}

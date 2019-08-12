@@ -41,8 +41,8 @@ namespace Experiment {
 		float flickerRate = 0.1f;
 		int timeOut = 8;
 
-		int distance = 0;
-		Vector dimensions = {};
+		int distance = 500;
+		Vector dimensions = {1200, 1000};
 
 		std::vector<Trial> trials = {};
 
@@ -52,7 +52,7 @@ namespace Experiment {
 		friend std::ostream& operator<<(std::ostream& os, const Run& r);
 	};
 
-	std::ostream& operator<<(std::ostream& os, const Vector& r);
+	std::ostream& operator<<(std::ostream& os, const Vector& v);
 	std::ostream& operator<<(std::ostream& os, const Trial& t);
 	std::ostream& operator<<(std::ostream& os, const Run& r);
 

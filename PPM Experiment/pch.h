@@ -6,7 +6,7 @@
 #pragma once
 
 #include <winsdkver.h>
-#define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0602
 #include <sdkddkver.h>
 
 #pragma comment(lib,"d3d11.lib")
@@ -75,7 +75,7 @@
 #include <vector>
 
 #define NUMBER_OF_WINDOWS 2
-//#define FULLSCREEN
+#define FULLSCREEN
 
 // convenience typealiases
 

@@ -177,7 +177,6 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="RenderTexture.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="StepTimer.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="tinyfiledialogs.h" />
     <ClInclude Include="Utils.h" />

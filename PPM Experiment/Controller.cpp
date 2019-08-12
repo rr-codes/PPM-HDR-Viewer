@@ -81,21 +81,21 @@ namespace Experiment {
 
 	bool Controller::GetResponse(DirectX::GamePad::State state)
 	{
-		using Button = DirectX::GamePad::ButtonStateTracker;
+		const auto PRESSED = DirectX::GamePad::ButtonStateTracker::PRESSED;
 
 		const auto right = m_buttons.rightTrigger;
 		const auto left = m_buttons.leftTrigger;
 
 		m_buttons.Update(state);
 
-		if (m_buttons.a == Button::PRESSED || m_buttons.b == Button::PRESSED)
+		if (m_buttons.a == PRESSED || m_buttons.b == PRESSED)
 		{
 			m_startButtonHasBeenPressed = true;
 			m_stopwatch->Restart();
 			return false;
 		}
 
-		if (right != Button::PRESSED && left != Button::PRESSED)
+		if (right != PRESSED && left != PRESSED)
 		{
 			return false;
 		}
@@ -106,7 +106,7 @@ namespace Experiment {
 			return false;
 		}
 
-		const auto response = (left == Button::PRESSED) ? Right : Left;
+		const auto response = (left == PRESSED) ? Right : Left;
 
 		m_run.trials[m_currentImageIndex].participantResponse = response;
 		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();

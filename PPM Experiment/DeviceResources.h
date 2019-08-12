@@ -99,16 +99,18 @@ namespace DX
 		void GetHardwareAdapter(IDXGIAdapter1** ppAdapter);
 		void UpdateColorSpace(int i);
 
+		std::array<Microsoft::WRL::ComPtr<IDXGISwapChain1>, 2>			m_swapChain;
+		std::array<Microsoft::WRL::ComPtr<ID3D11Texture2D>, 2>			m_renderTarget;
+		std::array<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>, 2>	m_d3dRenderTargetView;
+		std::array<HWND, 2> m_window;
+
 		// Direct3D objects.
 		Microsoft::WRL::ComPtr<IDXGIFactory2>               m_dxgiFactory;
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext1>        m_d3dContext;
-		Microsoft::WRL::ComPtr<IDXGISwapChain1>* m_swapChain;
 		Microsoft::WRL::ComPtr<ID3DUserDefinedAnnotation>   m_d3dAnnotation;
 
 		// Direct3D rendering objects. Required for 3D.
-		Microsoft::WRL::ComPtr<ID3D11Texture2D>* m_renderTarget;
 		Microsoft::WRL::ComPtr<ID3D11Texture2D>         m_depthStencil;
-		Microsoft::WRL::ComPtr<ID3D11RenderTargetView>* m_d3dRenderTargetView;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_d3dDepthStencilView;
 		D3D11_VIEWPORT                                  m_screenViewport;
 
@@ -119,7 +121,6 @@ namespace DX
 		D3D_FEATURE_LEVEL                               m_d3dMinFeatureLevel;
 
 		// Cached device properties.
-		HWND* m_window;
 
 		D3D_FEATURE_LEVEL                               m_d3dFeatureLevel;
 		RECT                                            m_outputSize;

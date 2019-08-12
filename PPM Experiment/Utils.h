@@ -5,6 +5,7 @@
 #include <filesystem>
 #include "pch.h"
 #include "Participant.h"
+#include <random>
 
 namespace vector
 {
@@ -17,6 +18,7 @@ namespace vector
 
 namespace Utils
 {
+
 	static void FatalError(const std::string& message)
 	{
 		const auto result = MessageBoxA(

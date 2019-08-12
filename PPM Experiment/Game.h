@@ -12,6 +12,7 @@
 #include "Participant.h"
 #include "SimpleMath.h"
 #include "Controller.h"
+#include <PostProcess.h>
 
 namespace Experiment {
 
@@ -29,7 +30,7 @@ namespace Experiment {
 		// Basic game loop
 		void Tick();
 		void OnEscapeKeyDown();
-		void OnGamePadButton(DX::StepTimer const& timer);
+		void OnGamePadButton(WPARAM key = 0x0);
 
 		// IDeviceNotify
 		virtual void OnDeviceLost() override;
@@ -50,11 +51,10 @@ namespace Experiment {
 
 	private:
 
-		void Update(DX::StepTimer const& timer);
+		void Update();
 
 		void Render(const DuoView& duo_view);
 		void Render(const SingleView& single_view);
-
 
 		void CreateDeviceDependentResources();
 		void CreateWindowSizeDependentResources();
@@ -62,24 +62,18 @@ namespace Experiment {
 		// Device resources.
 		std::unique_ptr<DX::DeviceResources> m_deviceResources;
 
-		// Rendering loop timer.
-		DX::StepTimer m_timer;
-		DX::StepTimer m_frameTimer;
-
 		std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
 		std::unique_ptr<DX::RenderTexture>* m_hdrScene;
 		std::unique_ptr<DirectX::ToneMapPostProcess>* m_toneMap;
 
 		bool m_shouldFlicker = false;
-		bool m_isReady = false;
 
 		std::unique_ptr<DirectX::GamePad>  m_gamePad;
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
 		Run m_run;
 		Controller* m_controller;
-
 
 		std::pair<DuoView, DuoView> m_stereoViews;
 		SingleView m_responseView;

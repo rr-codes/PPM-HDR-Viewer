@@ -1,15 +1,28 @@
 #include "Controller.h"
 #include <utility>
 
+extern void ExitGame();
+
 namespace Experiment {
-	
+
 	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
 	{
 		this->m_run = std::move(run);
 		this->m_deviceResources = deviceResources;
-		this->m_counter = std::make_unique<Utils::Counter>(0.1);
-	}
 
+		m_audioEngine = std::make_unique<DirectX::AudioEngine>(DirectX::AudioEngine_Default);
+
+		const auto dir = std::filesystem::current_path().generic_wstring() + L"/sounds/";
+		const auto success = dir + SUCCESS;
+		const auto failure = dir + FAILURE;
+
+		m_successSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), success.c_str());
+		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), failure.c_str());
+
+		this->m_fpstimer = std::make_unique<Utils::Timer<>>(20);
+		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(m_run.flickerRate * 1000.0);
+		this->m_stopwatch = std::make_unique<Utils::Stopwatch<>>();
+	}
 
 	static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
 	{
@@ -19,6 +32,51 @@ namespace Experiment {
 		croppedRef.copyTo(cropped);
 
 		return cropped;
+	}
+
+	bool Controller::GetResponse(WPARAM key)
+	{
+		if (key == VK_RETURN)
+		{
+			m_startButtonHasBeenPressed = true;
+			m_stopwatch->Restart();
+			return false;
+		}
+
+		if (key != VK_LEFT && key != VK_RIGHT)
+		{
+			return false;
+		}
+
+		if (!m_startButtonHasBeenPressed)
+		{
+			return false;
+		}
+
+		const auto response = (key == VK_LEFT) ? Right : Left;
+
+		m_run.trials[m_currentImageIndex].participantResponse = response;
+		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
+
+		if (response == m_run.trials[m_currentImageIndex].correctOption)
+		{
+			m_successSound->Play();
+		}
+		else
+		{
+			m_failureSound->Play();
+		}
+
+		if (m_currentImageIndex + 1 >= m_run.trials.size())
+		{
+			m_run.Export("result" + m_run.id + ".csv");
+
+			ExitGame();
+			exit(0);
+			return false;
+		}
+
+		return true;
 	}
 
 	bool Controller::GetResponse(DirectX::GamePad::State state)
@@ -33,7 +91,7 @@ namespace Experiment {
 		if (m_buttons.a == Button::PRESSED || m_buttons.b == Button::PRESSED)
 		{
 			m_startButtonHasBeenPressed = true;
-			m_counter->Reset();
+			m_stopwatch->Restart();
 			return false;
 		}
 
@@ -48,15 +106,27 @@ namespace Experiment {
 			return false;
 		}
 
-		m_run.trials[m_currentImageIndex].participantResponse = (left == Button::PRESSED) ? Right : Left;
-		m_run.trials[m_currentImageIndex].duration = m_counter->Elapsed();
+		const auto response = (left == Button::PRESSED) ? Right : Left;
+
+		m_run.trials[m_currentImageIndex].participantResponse = response;
+		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
+
+		
+		if (response == m_run.trials[m_currentImageIndex].correctOption)
+		{
+			m_successSound->Play();
+		}
+		else
+		{
+			m_failureSound->Play();
+		}
 		
 		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
 			m_run.Export("result" + m_run.id + ".csv");
 
+			ExitGame();
 			exit(0);
-			return false;
 		}
 
 		return true;
@@ -81,7 +151,7 @@ namespace Experiment {
 
 		auto cropped = (region == nullptr) 
 			? matrix 
-			: CropMatrix(matrix, cv::Rect(region->x, region->y, m_run.width, m_run.height));
+			: CropMatrix(matrix, cv::Rect(region->x, region->y, m_run.dimensions.x, m_run.dimensions.y));
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;
@@ -149,10 +219,10 @@ namespace Experiment {
 			sidePrefixes = { "_L", "_R" };
 		}
 
-		std::vector<std::string> files = {
-			start + sidePrefixes.left  + "_dec.ppm",
+		auto files = std::vector<std::string>{
+			start + sidePrefixes.left  + "_dec.ppm" ,
 			start + sidePrefixes.left  + "_orig.ppm",
-			start + sidePrefixes.right + "_dec.ppm",
+			start + sidePrefixes.right + "_dec.ppm" ,
 			start + sidePrefixes.right + "_orig.ppm",
 		};
 
@@ -167,13 +237,13 @@ namespace Experiment {
 		}
 
 		auto left = DirectX::SimpleMath::Vector2(
-			dims.x / 2 - m_run.distance / 2 - m_run.width,
-			dims.y / 2 - m_run.height / 2
+			dims.x / 2 - m_run.distance / 2 - m_run.dimensions.x,
+			dims.y / 2 - m_run.dimensions.y / 2
 		);
 
 		auto right = DirectX::SimpleMath::Vector2(
 			dims.x / 2 + m_run.distance / 2,
-			dims.y / 2 - m_run.height / 2
+			dims.y / 2 - m_run.dimensions.y / 2
 		);
 
 		DuoView no_flicker = {};

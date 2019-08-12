@@ -6,6 +6,7 @@
 #define NOMINMAX
 #endif
 
+
 #include "pch.h"
 #include "Game.h"
 #include <iostream>
@@ -13,8 +14,10 @@
 #include <string>
 #include <filesystem>
 #include "tinyfiledialogs.h"
+#include <commctrl.h>
 
 #pragma comment(lib, "Comdlg32.lib")
+#pragma comment(lib, "Comctl32.lib")
 
 HWND* windows;
 
@@ -63,7 +66,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	);
 
 	const std::wstring empty;
-	if (file == empty.c_str()) exit(0);
+	if (file == empty) exit(0);
 
 	auto run = Experiment::Run::CreateRun(file);
 	g_game = std::make_unique<Experiment::Game>(run);
@@ -181,10 +184,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
+	case WM_QUIT:
+		if (game)
+		{
+			game->OnEscapeKeyDown();
+		}
+		break;
+
 	case WM_KEYDOWN:
 		if (game && wParam == VK_ESCAPE)
 		{
 			game->OnEscapeKeyDown();
+		}
+		if (game)
+		{
+			game->OnGamePadButton(wParam);
 		}
 		break;
 

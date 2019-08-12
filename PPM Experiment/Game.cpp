@@ -14,8 +14,8 @@
 
 extern void ExitGame();
 
-namespace Experiment {
-	constexpr float FLICKER_RATE = 0.1f;
+namespace Experiment 
+{
 
 	Game::Game(Run run) noexcept(false) : m_run(std::move(run))
 	{
@@ -44,6 +44,8 @@ namespace Experiment {
 	// Initialize the Direct3D resources required to run.
 	void Game::Initialize(HWND windows[], int width, int height)
 	{
+		auto measure = Utils::Stopwatch<>();
+
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 		{
 			m_deviceResources->SetWindow(i, windows[i], width, height);
@@ -74,24 +76,30 @@ namespace Experiment {
 		m_responseView = m_controller->SetStaticStereoView({
 			dir + "responsescreen_R.ppm",
 			dir + "responsescreen_L.ppm"
-			});
+		});
 
-		m_timer.SetFixedTimeStep(true);
-		m_timer.SetTargetElapsedSeconds(FLICKER_RATE);
-
-		m_frameTimer.SetFixedTimeStep(true);
-		m_frameTimer.SetTargetElapsedSeconds(1.0f / 60.0f);
+		Debug::Console::log("\n\nInitialize took " + std::to_string(measure.Elapsed().count()) + " ms\n\n");
 
 		Render(stereo);
+
+		m_controller->GetFlickerTimer()->Start();
+		m_controller->GetFPSTimer()->Start();
 	}
 
 #pragma region Frame Update
 	// Executes the basic game loop.
 	void Game::Tick()
 	{
-		m_frameTimer.Tick([&]() { OnGamePadButton(m_frameTimer); });
+		m_controller->GetFPSTimer()->Tick([&]()
+		{
+			m_controller->GetAudioEngine()->Update();
+			OnGamePadButton();
+		});
 
-		m_timer.Tick([&]() { Update(m_timer); });
+		m_controller->GetFlickerTimer()->Tick([&]()
+		{
+			Update();
+		});
 	}
 
 
@@ -102,39 +110,45 @@ namespace Experiment {
 			m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
 		}
 
+		delete[] m_hdrScene;
+		delete[] m_toneMap;
+		delete m_controller;
+
+		m_spriteBatch.reset();
+		m_gamePad.reset();
+
+
 		m_deviceResources.reset();
-		ExitGame();
 		exit(0);
 	}
 
 
-	void Game::OnGamePadButton(DX::StepTimer const& timer)
+	void Game::OnGamePadButton(const WPARAM key)
 	{
 		const auto state = m_gamePad->GetState(0);
-		if (!state.IsConnected()) return;
 
-		auto shouldGoToNextImage = m_controller->GetResponse(state);
+		auto shouldGoToNextImage = state.IsConnected()
+			? m_controller->GetResponse(state) 
+			: m_controller->GetResponse(key);
+
 		if (shouldGoToNextImage)
 		{
 			auto q = m_run.trials[++m_controller->m_currentImageIndex];
 			m_stereoViews = m_controller->SetFlickerStereoViews(q);
 
-			m_controller->GetCounter()->Reset();
+			m_controller->GetStopwatch()->Restart();
 		}
 	}
 
 	// Updates the world.
-	void Game::Update(DX::StepTimer const& timer)
+	void Game::Update()
 	{
-		m_controller->GetCounter()->Tick();
-
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
 			return;
 		}
 
-		Debug::Console::log("\n" + std::to_string(m_controller->GetCounter()->Elapsed()));
-		if (m_controller->GetCounter()->Elapsed() > 8.0)
+		if (m_controller->GetStopwatch()->Elapsed() > std::chrono::seconds(m_run.timeOut))
 		{
 			Render(m_responseView);
 		}
@@ -269,7 +283,6 @@ namespace Experiment {
 
 	void Game::OnResuming()
 	{
-		m_timer.ResetElapsedTime();
 		m_gamePad->Resume();
 		m_buttons.Reset();
 	}

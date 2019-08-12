@@ -98,4 +98,12 @@
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="sounds\Error1.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\Success3.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

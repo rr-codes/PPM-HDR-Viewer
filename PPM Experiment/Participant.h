@@ -38,8 +38,11 @@ namespace Experiment {
 		std::string id = "";
 		std::string folderPath = "";
 
-		int width = 0, height = 0;
+		float flickerRate = 0.1f;
+		int timeOut = 8;
+
 		int distance = 0;
+		Vector dimensions = {};
 
 		std::vector<Trial> trials = {};
 

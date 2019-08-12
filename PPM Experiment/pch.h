@@ -11,8 +11,15 @@
 
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "x3daudio.lib")
 #pragma comment(lib, "opencv_world410d.lib")
 #pragma comment(lib, "dxguid.lib")
+
+#pragma comment(lib, "Comdlg32.lib")
+#pragma comment(lib, "Comctl32.lib")
+
+
+
 
 // Use the C++ standard templated min/max
 #define NOMINMAX
@@ -55,6 +62,9 @@
 #include <SimpleMath.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/directx.hpp>
+#include <Audio.h>
+#include <commctrl.h>
+
 
 #include "Utils.h"
 
@@ -65,7 +75,7 @@
 #include <vector>
 
 #define NUMBER_OF_WINDOWS 2
-#define FULLSCREEN
+//#define FULLSCREEN
 
 // convenience typealiases
 

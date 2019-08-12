@@ -26,11 +26,11 @@ namespace Experiment
 
 	std::ostream& operator<<(std::ostream& os, const Run& r)
 	{
-		os << r.id << ", " 
-			<< r.folderPath << ", " 
-			<< r.distance << ", " 
-			<< r.width << ", "
-			<< r.height << "\n";
+		os << r.id << ", "
+			<< r.folderPath << ", "
+			<< r.distance << ", "
+			<< r.flickerRate << ", "
+			<< r.dimensions << "\n";
 
 		for (auto& trial : r.trials)
 		{
@@ -69,9 +69,11 @@ namespace Experiment
 		j.at("participant id").get_to<std::string>(r.id);
 		j.at("image folder").get_to<std::string>(r.folderPath);
 
+		j.at("flicker rate").get_to<float>(r.flickerRate);
+		j.at("time out").get_to<int>(r.timeOut);
+
 		j.at("distance").get_to(r.distance);
-		j.at("image width").get_to(r.width);
-		j.at("image height").get_to(r.height);
+		j.at("dimensions").get_to<Vector>(r.dimensions);
 
 		j.at("trials").get_to<std::vector<Trial>>(r.trials);
 	}
@@ -79,26 +81,36 @@ namespace Experiment
 	/// Sample JSON Config file:
 	/// <code>
 	/// {
-	///		"id" : user42
-	///		"image folder" : "C:/Users/lab/Desktop/colors",
+	///		"participant id": "Richard Robinson",
+	///		"image folder" : "C:/Users/Richard/Desktop/images",
+	///		"flicker rate" : 1.0,
 	///		"distance" : 500,
-	///		"image width" : 1200,
-	///		"image height" : 1000,
+	///		"dimensions" : {
+	///			"image height": 1000,
+	///			"image width" : 1200
+	///		},
+	///		"time out" : 8.0,
 	///		"trials" : [
 	///			{
-	///				"image": "red",
+	///				"image name": "cave",
 	///				"correct option" : 1,
 	///				"position" : {
-	///					"x" : 100,
-	///					"y" : 200
+	///					"x": 0,
+	///					"y" : 0
 	///				},
 	///				"viewing mode" : 0
 	///			},
 	///			{
-	///			...
+	///				"image name": "cave",
+	///				"correct option" : 2,
+	///				"position" : {
+	///					"x": 0,
+	///					"y" : 0
+	///				},
+	///				"viewing mode" : 1
 	///			}
 	///		]
-	///	}
+	///}
 	///	</code>
 	Run Run::CreateRun(const std::filesystem::path& configPath)
 	{

@@ -97,7 +97,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(DirectXTK_Path)\bin\Desktop_2019\x64\Debug;$(OpenCV_Path)\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(DirectXTK_Path)\bin\Desktop_2019_Win10\x64\Debug;$(OpenCV_Path)\x64\vc15\lib;$(DXSDK_DIR)\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>DirectXTK.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -189,6 +189,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PPM Experiment.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="sounds\Error1.wav" />
+    <Media Include="sounds\Success3.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

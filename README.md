@@ -56,13 +56,6 @@ An XBOX controller or the arrow keys may be used.
  {
     "Participant ID" : "Richard",
     "Image Directory" : "C://",
-    "Flicker Rate" : 0.1,
-    "Timeout Duration" : 8.0,
-    "Distance": 500,
-    "Image Dimensions" : {
-       "Width" : 1200,
-       "Height" : 1000
-    },
     "Trials" : [
        {
           "Image Name": "something",

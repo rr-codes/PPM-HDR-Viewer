@@ -23,9 +23,16 @@ namespace Experiment
 		return os;
 	}
 
+	std::ostream& operator<<(std::ostream& os, const Participant& p)
+	{
+		os << p.id << ", " << p.age << ", " << p.gender << ", " << p.session;
+		return os;
+	}
+
 	std::ostream& operator<<(std::ostream& os, const Run& r)
 	{
-		os << r.id << ", " << r.folderPath << "\n";
+		os << r.group << ", " << r.folderPath << "\n";
+		os << r.participant << "\n";
 
 		for (auto& trial : r.trials)
 		{
@@ -59,8 +66,9 @@ namespace Experiment
 
 	void from_json(const nlohmann::json& j, Run& r)
 	{
-		j.at("participant id").get_to<std::string>(r.id);
+		j.at("original image directory").get_to<std::string>(r.originalImageDirectory);
 		j.at("image folder").get_to<std::string>(r.folderPath);
+		j.at("experimental group").get_to<int>(r.group);
 		j.at("trials").get_to<std::vector<Trial>>(r.trials);
 	}
 

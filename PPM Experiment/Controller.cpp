@@ -69,7 +69,7 @@ namespace Experiment {
 
 		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
-			m_run.Export("result" + m_run.id + ".csv");
+			m_run.Export("result" + m_run.participant.id + ".csv");
 
 			ExitGame();
 			exit(0);
@@ -123,7 +123,7 @@ namespace Experiment {
 		
 		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
-			m_run.Export("result" + m_run.id + ".csv");
+			m_run.Export("result" + m_run.participant.id + ".csv");
 
 			ExitGame();
 			exit(0);
@@ -202,7 +202,9 @@ namespace Experiment {
 
 	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
-		const auto start = m_run.folderPath + "/" + trial.imageName;
+		const auto modifiedImageStart = m_run.folderPath + "/" + trial.imageName;
+		const auto originalImageStart = m_run.originalImageDirectory + "/" + trial.imageName;
+
 		Utils::Duo<std::string> sidePrefixes = {};
 
 		switch (trial.mode)
@@ -220,10 +222,10 @@ namespace Experiment {
 		}
 
 		auto files = std::vector<std::string>{
-			start + sidePrefixes.left  + "_dec.ppm" ,
-			start + sidePrefixes.left  + "_orig.ppm",
-			start + sidePrefixes.right + "_dec.ppm" ,
-			start + sidePrefixes.right + "_orig.ppm",
+			modifiedImageStart + sidePrefixes.left  + "_dec.ppm" ,
+			originalImageStart + sidePrefixes.left  + "_orig.ppm",
+			modifiedImageStart + sidePrefixes.right + "_dec.ppm" ,
+			originalImageStart + sidePrefixes.right + "_orig.ppm",
 		};
 
 		std::vector<ComPtr<ID3D11ShaderResourceView>> views;

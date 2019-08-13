@@ -9,6 +9,10 @@
 #define _WIN32_WINNT 0x0602
 #include <sdkddkver.h>
 
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "x3daudio.lib")
@@ -17,6 +21,7 @@
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")
+#pragma comment(lib, "ComCtl32.lib")
 
 
 

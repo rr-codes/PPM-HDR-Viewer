@@ -86,14 +86,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	std::wstring ws(lpCmdLine);
-
-	if (!ws.empty())
-	{
-		numberOfWindows = 1;
-		g_game = std::make_unique<Game>(ws.substr(1, ws.size() - 2), false, false);
-	}
-	else
 	{
 		int stereo = MessageBox(nullptr, L"Do you want to view in stereo?", L"Enable Stereo", MB_YESNO | MB_ICONQUESTION);
 		int flicker = MessageBox(nullptr, L"Do you want the image(s) to flicker?", L"Enable Flicker", MB_YESNO | MB_ICONQUESTION);

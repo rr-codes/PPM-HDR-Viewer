@@ -4,6 +4,8 @@
 extern void ExitGame();
 
 namespace Experiment {
+	static const std::string DESTINATION_PATH = R"(C:\Users\lab\Documents\Results\)";
+	constexpr int FRAME_INTERVAL = 20;
 
 	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
 	{
@@ -19,7 +21,7 @@ namespace Experiment {
 		m_successSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), success.c_str());
 		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), failure.c_str());
 
-		this->m_fpstimer = std::make_unique<Utils::Timer<>>(20);
+		this->m_fpstimer = std::make_unique<Utils::Timer<>>(FRAME_INTERVAL);
 		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(m_run.flickerRate * 1000.0);
 		this->m_stopwatch = std::make_unique<Utils::Stopwatch<>>();
 	}
@@ -34,7 +36,7 @@ namespace Experiment {
 		return cropped;
 	}
 
-	bool Controller::GetResponse(WPARAM key)
+	bool Controller::GetResponse(const WPARAM key)
 	{
 		if (key == VK_RETURN)
 		{
@@ -54,32 +56,12 @@ namespace Experiment {
 		}
 
 		const auto response = (key == VK_LEFT) ? Right : Left;
-
-		m_run.trials[m_currentImageIndex].participantResponse = response;
-		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
-
-		if (response == m_run.trials[m_currentImageIndex].correctOption)
-		{
-			m_successSound->Play();
-		}
-		else
-		{
-			m_failureSound->Play();
-		}
-
-		if (m_currentImageIndex + 1 >= m_run.trials.size())
-		{
-			m_run.Export("result" + m_run.participant.id + ".csv");
-
-			ExitGame();
-			exit(0);
-			return false;
-		}
+		AppendResponse(response);
 
 		return true;
 	}
 
-	bool Controller::GetResponse(DirectX::GamePad::State state)
+	bool Controller::GetResponse(const DirectX::GamePad::State state)
 	{
 		const auto PRESSED = DirectX::GamePad::ButtonStateTracker::PRESSED;
 
@@ -100,18 +82,22 @@ namespace Experiment {
 			return false;
 		}
 
-
 		if (!m_startButtonHasBeenPressed)
 		{
 			return false;
 		}
 
 		const auto response = (left == PRESSED) ? Right : Left;
+		AppendResponse(response);
 
+		return true;
+	}
+
+	void Controller::AppendResponse(const Option response)
+	{
 		m_run.trials[m_currentImageIndex].participantResponse = response;
 		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
 
-		
 		if (response == m_run.trials[m_currentImageIndex].correctOption)
 		{
 			m_successSound->Play();
@@ -120,16 +106,14 @@ namespace Experiment {
 		{
 			m_failureSound->Play();
 		}
-		
+
 		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
-			m_run.Export("result" + m_run.participant.id + ".csv");
+			m_run.Export(DESTINATION_PATH + "result_" + m_run.participant.id + ".csv");
 
 			ExitGame();
 			exit(0);
 		}
-
-		return true;
 	}
 
 	ComPtr<ID3D11ShaderResourceView> Controller::ConvertImageToResource(const std::filesystem::path& image, Vector* region) const
@@ -202,7 +186,7 @@ namespace Experiment {
 
 	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
-		const auto modifiedImageStart = m_run.folderPath + "/" + trial.imageName;
+		const auto modifiedImageStart = trial.directory + "/" + trial.imageName;
 		const auto originalImageStart = m_run.originalImageDirectory + "/" + trial.imageName;
 
 		Utils::Duo<std::string> sidePrefixes = {};

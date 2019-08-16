@@ -1,0 +1,10 @@
+Group: 42
+Participant: {id: 0, age: 0, gender: 1, session: 0}
+
+Directory, Image, Side, Position-X, Position-Y, Mode, Response, Duration
+C:\\Users\\lab\\Desktop\\Selected Images\\DSC\\DSCv1.2_SampleSet_10bpc_RGB_444_6bpp_SH=108_SPL=2_0000, bathroom, 500, 1000, 0, 1, 542.000000
+C:\\Users\\lab\\Desktop\\Selected Images\\DSC\\DSCv1.2_SampleSet_10bpc_RGB_444_6bpp_SH=108_SPL=2_0000, CrazyTown, 0, 0, 0, 1, 220.000000
+C:\\Users\\lab\\Desktop\\Selected Images\\DSC\\DSCv1.2_SampleSet_10bpc_RGB_444_6bpp_SH=108_SPL=2_0000, monitor, 0, 0, 1, 1, 220.000000
+C:\\Users\\lab\\Desktop\\Selected Images\\DSC\\DSCv1.2_SampleSet_10bpc_RGB_444_6bpp_SH=108_SPL=2_0000, PurpleRoom, 0, 0, 2, 1, 260.000000
+C:\\Users\\lab\\Desktop\\Selected Images\\DSC\\DSCv1.2_SampleSet_10bpc_RGB_444_6bpp_SH=108_SPL=2_0000, cave, 0, 500, 0, 1, 320.000000
+

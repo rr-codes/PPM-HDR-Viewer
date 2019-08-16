@@ -48,6 +48,8 @@ namespace Experiment {
 			Vector* region
 		) const;
 
+		void AppendResponse(Option response);
+
 		DX::DeviceResources* m_deviceResources;
 		Experiment::Run m_run;
 

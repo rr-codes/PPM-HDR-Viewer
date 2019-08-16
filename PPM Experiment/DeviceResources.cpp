@@ -509,7 +509,7 @@ void DX::DeviceResources::DiscardView(int i)
  */
 void DX::DeviceResources::GoFullscreen(int i)
 {
-#ifdef FULLSCREEN
+#ifndef _DEBUG
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 

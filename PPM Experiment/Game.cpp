@@ -44,8 +44,6 @@ namespace Experiment
 	// Initialize the Direct3D resources required to run.
 	void Game::Initialize(HWND windows[], int width, int height)
 	{
-		auto measure = Utils::Stopwatch<>();
-
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 		{
 			m_deviceResources->SetWindow(i, windows[i], width, height);
@@ -77,8 +75,6 @@ namespace Experiment
 			dir + "responsescreen_R.ppm",
 			dir + "responsescreen_L.ppm"
 		});
-
-		Debug::Console::log("\n\nInitialize took " + std::to_string(measure.Elapsed().count()) + " ms\n\n");
 
 		Render(stereo);
 

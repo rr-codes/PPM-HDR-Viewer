@@ -30,13 +30,84 @@ namespace
 };
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR DiagProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 // Indicates to hybrid graphics systems to prefer the discrete part by default
 extern "C"
 {
 	__declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
+Experiment::Run Configure()
+{
+	const wchar_t* filter = { L"*.csv" };
+	const auto file = tinyfd_openFileDialogW(
+		L"Select Configuration FIle",
+		nullptr,
+		1,
+		&filter,
+		L"CSV",
+		0
+	);
+
+	Experiment::Participant p = {};
+
+	p.session = string::to_int(tinyfd_inputBox(
+		"Session ID",
+		"Enter the Session ID",
+		"0"
+	));
+
+	p.id = tinyfd_inputBox(
+		"Subject Name",
+		"Enter Subject Name",
+		"0"
+	);
+
+
+	p.age = string::to_int(tinyfd_inputBox(
+		"Subject Age",
+		"Enter Subject Age",
+		"0"
+	));
+
+
+	std::string gender_s = tinyfd_inputBox(
+		"Subject Gender",
+		"Enter Subject Gender (M/F)",
+		"M"
+	);
+
+	p.gender = (gender_s == "M" || gender_s == "m")
+		? Experiment::Male
+		: Experiment::Female;
+
+	const std::wstring empty;
+	if (file == empty) exit(0);
+
+	auto run = Experiment::Run::CreateRun(file);
+	run.participant = p;
+
+	const auto ws = L"Confirm the experimental configuration:\nGroup:\t" + std::to_wstring(run.group)
+		+ L"\nSession:\t"	+ std::to_wstring(run.participant.session)
+		+ L"\nName:\t"		+ string::to_wstring(run.participant.id)
+		+ L"\nAge:\t"		+ std::to_wstring(run.participant.age)
+		+ L"\nGender:\t"	+ (run.participant.gender == Experiment::Female ? L"Female" : L"Male");
+
+	auto ok = tinyfd_messageBoxW(
+		L"Confirm Configuration", 
+		ws.c_str(), 
+		L"okcancel", 
+		L"info", 
+		1
+	);
+
+	if (!ok)
+	{
+		exit(1);
+	}
+
+	return run;
 }
 
 // Entry point
@@ -57,47 +128,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	const wchar_t* filter = { L"*.json" };
-	const auto file = tinyfd_openFileDialogW(
-		L"Select Configuration FIle",
-		nullptr,
-		1,
-		&filter,
-		L"JSON",
-		0
-	);
-
-	auto session = tinyfd_inputBox("Session ID", "Enter the Session ID", "0");
-	auto name	 = tinyfd_inputBox("Subject Name", "Enter Subject Name", "0");
-	auto age	 = tinyfd_inputBox("Subject Age", "Enter Subject Age", "0");
-	auto gender  = tinyfd_inputBox("Subject Gender", "Enter Subject Gender (M/F)", "M");
-
-	auto participant = Experiment::Participant{
-		std::atoi(session),
-		std::string(name),
-		std::atoi(age),
-		std::string(gender) == "M" ? Experiment::Male : Experiment::Female
-	};
-
-	const std::wstring empty;
-	if (file == empty) exit(0);
-
-	auto run = Experiment::Run::CreateRun(file);
-	run.participant = participant;
-
-	auto ws = L"Confirm the experimental configuration:\nGroup:\t" + std::to_wstring(run.group)
-		+ L"\nSession:\t" + std::to_wstring(run.participant.session)
-		+ L"\nName:\t" + std::wstring(run.participant.id.begin(), run.participant.id.end())
-		+ L"\nAge:\t" + std::to_wstring(run.participant.age)
-		+ L"\nGender:\t" + (run.participant.gender == Experiment::Female ? L"Female" : L"Male");
-
-	auto ok = tinyfd_messageBoxW(L"Confirm Configuration", ws.c_str(), L"okcancel", L"info", 1);
-
-	if (!ok)
-	{
-		exit(1);
-	}
-
+	auto run = Configure();
 	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;
@@ -178,39 +209,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	CoUninitialize();
 
 	return static_cast<int>(msg.wParam);
-}
-
-wchar_t session[MAXCHAR];
-wchar_t subjectID[MAXCHAR];
-wchar_t age[MAXCHAR];
-
-enum Gender {Male, Female};
-Gender gender;
-
-INT_PTR DiagProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDC_BUTTON1:
-			GetDlgItemText(hWnd, IDC_EDIT1, session, MAXCHAR);
-			GetDlgItemText(hWnd, IDC_EDIT2, subjectID, MAXCHAR);
-			GetDlgItemText(hWnd, IDC_EDIT3, subjectID, MAXCHAR);
-			break;
-
-		case IDC_RADIO1:
-			gender = Male;
-			break;
-
-		case IDC_RADIO2:
-			gender = Female;
-			break;
-		}
-	}
-
-	return TRUE;
 }
 
 // Windows procedure

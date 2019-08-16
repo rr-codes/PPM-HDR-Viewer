@@ -16,7 +16,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "x3daudio.lib")
-#pragma comment(lib, "opencv_world410d.lib")
+// #pragma comment(lib, "opencv_world410.lib")
 #pragma comment(lib, "dxguid.lib")
 
 #pragma comment(lib, "Comdlg32.lib")

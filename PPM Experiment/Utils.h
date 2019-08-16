@@ -69,16 +69,39 @@ namespace string
 		return asString;
 	}
 
-	static std::vector<std::string> split(string_ref str)
+	static std::wstring to_wstring(std::string s)
 	{
-		auto iss = std::istringstream(str);
+		return std::wstring(s.begin(), s.end());
+	}
 
-		std::vector<std::string> arguments(
-			std::istream_iterator<std::string>{iss},
-			std::istream_iterator<std::string>{}
-		);
+	static std::wstring to_wstring(char const* s)
+	{
+		return to_wstring(std::string(s));
+	}
 
-		return arguments;
+	static std::wstring to_wstring(const int n)
+	{
+		return to_wstring(std::to_string(n));
+	}
+
+	static int to_int(char const* s)
+	{
+		return std::stoi(std::string(s));
+	}
+
+	static std::vector<std::string> split(std::string str, const std::string& delimiter = " ")
+	{
+		size_t pos = 0;
+		std::vector<std::string> vec;
+
+		while ((pos = str.find(delimiter)) != std::string::npos) {
+			auto token = str.substr(0, pos);
+
+			vec.push_back(token);
+			str.erase(0, pos + delimiter.length());
+		}
+
+		return vec;
 	}
 
 	static bool contains(string_ref str, string_ref substr)

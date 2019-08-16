@@ -82,9 +82,11 @@
     <ClInclude Include="Stopwatch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="csv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="response\responsescreen_L.ppm" />
     <None Include="response\responsescreen_R.ppm">
       <Filter>Resource Files</Filter>

@@ -104,6 +104,7 @@ Experiment::Run Configure()
 
 	if (!ok)
 	{
+		Utils::FatalError("You selected 'Cancel'. The application will now quit.");
 		exit(1);
 	}
 
@@ -134,7 +135,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	RECT rc;
 
 	windows = new HWND[NUMBER_OF_WINDOWS];
-
 
 	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 
@@ -186,7 +186,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 			GetClientRect(windows[i], &rc);
 		}
 	}
-
 
 	g_game->Initialize(windows, rc.right - rc.left, rc.bottom - rc.top);
 

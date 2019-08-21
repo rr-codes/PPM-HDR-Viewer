@@ -4,8 +4,7 @@
 #include <GamePad.h>
 #include "Stopwatch.h"
 
-constexpr auto SUCCESS = L"Success3.wav";
-constexpr auto FAILURE = L"Error1.wav";
+constexpr auto FAILURE = L"Success3.wav";
 
 namespace Experiment {
 
@@ -35,6 +34,7 @@ namespace Experiment {
 
 		[[nodiscard]] Utils::Timer<>* GetFPSTimer() const { return m_fpstimer.get(); }
 		[[nodiscard]] Utils::Timer<>* GetFlickerTimer() const { return m_flickerTimer.get(); }
+
 		[[nodiscard]] Utils::Stopwatch<>* GetStopwatch() const { return m_stopwatch.get(); }
 
 		DirectX::AudioEngine* GetAudioEngine() const { return m_audioEngine.get(); }
@@ -56,11 +56,13 @@ namespace Experiment {
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
 		std::unique_ptr<DirectX::AudioEngine> m_audioEngine;
-		std::unique_ptr<DirectX::SoundEffect> m_successSound, m_failureSound;
+		std::unique_ptr<DirectX::SoundEffect> m_failureSound;
 
 		std::unique_ptr<Utils::Timer<>> m_fpstimer;
 		std::unique_ptr<Utils::Timer<>> m_flickerTimer;
+
 		std::unique_ptr<Utils::Stopwatch<>> m_stopwatch;
+
 	};
 
 }

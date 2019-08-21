@@ -21,6 +21,18 @@
     <Image Include="PPM Experiment.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="instructions\responsescreen_R.ppm">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="instructions\responsescreen_L.ppm">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="instructions\startscreen_L.ppm">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="instructions\startscreen_R.ppm">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -87,12 +99,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="response\responsescreen_L.ppm" />
-    <None Include="response\responsescreen_R.ppm">
-      <Filter>Resource Files</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="PPM Experiment.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
@@ -104,5 +110,13 @@
     <Media Include="sounds\Success3.wav">
       <Filter>Resource Files</Filter>
     </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="black\blackscreen_L.ppm">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="black\blackscreen_R.ppm">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -187,15 +187,37 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="response\responsescreen_L.ppm" />
-    <None Include="response\responsescreen_R.ppm" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="PPM Experiment.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Media Include="sounds\Error1.wav" />
-    <Media Include="sounds\Success3.wav" />
+    <Media Include="sounds\Error1.wav">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Media>
+    <Media Include="sounds\Success3.wav">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="instructions\responsescreen_L.ppm">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Image>
+    <Image Include="instructions\responsescreen_R.ppm">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Image>
+    <Image Include="instructions\startscreen_L.ppm">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Image>
+    <Image Include="instructions\startscreen_R.ppm">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <FileType>Document</FileType>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="black\blackscreen_L.ppm" />
+    <None Include="black\blackscreen_R.ppm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

@@ -14,15 +14,12 @@ namespace Experiment {
 
 		m_audioEngine = std::make_unique<DirectX::AudioEngine>(DirectX::AudioEngine_Default);
 
-		const auto dir = std::filesystem::current_path().generic_wstring() + L"/sounds/";
-		const auto success = dir + SUCCESS;
-		const auto failure = dir + FAILURE;
-
-		m_successSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), success.c_str());
-		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), failure.c_str());
+		const auto dir = std::filesystem::current_path().generic_wstring() + L"/sounds/" + FAILURE;
+		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), dir.c_str());
 
 		this->m_fpstimer = std::make_unique<Utils::Timer<>>(FRAME_INTERVAL);
 		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(m_run.flickerRate * 1000.0);
+
 		this->m_stopwatch = std::make_unique<Utils::Stopwatch<>>();
 	}
 
@@ -98,18 +95,18 @@ namespace Experiment {
 		m_run.trials[m_currentImageIndex].participantResponse = response;
 		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
 
-		if (response == m_run.trials[m_currentImageIndex].correctOption)
-		{
-			m_successSound->Play();
-		}
-		else
+		if (response != m_run.trials[m_currentImageIndex].correctOption)
 		{
 			m_failureSound->Play();
 		}
 
 		if (m_currentImageIndex + 1 >= m_run.trials.size())
 		{
-			m_run.Export(DESTINATION_PATH + "result_" + m_run.participant.id + ".csv");
+			m_run.Export(DESTINATION_PATH 
+				+ "id_" + m_run.participant.id 
+				+ "_session_" + std::to_string(m_run.participant.session) 
+				+ ".csv"
+			);
 
 			ExitGame();
 			exit(0);

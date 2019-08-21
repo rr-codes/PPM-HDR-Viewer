@@ -29,7 +29,6 @@ namespace Experiment
 		);
 
 		m_deviceResources->RegisterDeviceNotify(this);
-
 		m_controller = new Controller(m_run, m_deviceResources.get());
 
 		// m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
@@ -38,12 +37,15 @@ namespace Experiment
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
 			m_hdrScene[i] = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
 		}
-
 	}
 
 	// Initialize the Direct3D resources required to run.
 	void Game::Initialize(HWND windows[], int width, int height)
 	{
+		while (ShowCursor(false) >= 0)
+		{
+		}
+
 		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
 		{
 			m_deviceResources->SetWindow(i, windows[i], width, height);
@@ -64,16 +66,16 @@ namespace Experiment
 
 		m_stereoViews = m_controller->SetFlickerStereoViews(m_run.trials[0]);
 
-		const auto dir = std::filesystem::current_path().generic_string() + "/response/";
+		const auto dir = std::filesystem::current_path().generic_string() + "/instructions/";
 
 		const auto stereo = m_controller->SetStaticStereoView({
-			dir + "responsescreen_R.ppm",
-			dir + "responsescreen_L.ppm"
+			dir + "startscreen_L.ppm",
+			dir + "startscreen_R.ppm"
 		});
 
 		m_responseView = m_controller->SetStaticStereoView({
-			dir + "responsescreen_R.ppm",
-			dir + "responsescreen_L.ppm"
+			dir + "responsescreen_L.ppm",
+			dir + "responsescreen_R.ppm"
 		});
 
 		Render(stereo);
@@ -142,15 +144,29 @@ namespace Experiment
 			return;
 		}
 
-		if (m_controller->GetStopwatch()->Elapsed() > std::chrono::seconds(m_run.timeOut))
+		auto elapsed = m_controller->GetStopwatch()->Elapsed();
+		auto delta = std::chrono::milliseconds(m_run.intermediateDuration);
+
+		if (elapsed < delta)
+		{
+			const auto dir = std::filesystem::current_path().generic_string() + "/black/";
+			auto black = m_controller->SetStaticStereoView({ 
+				dir + "blackscreen_L.ppm", 
+				dir + "blackscreen_R.ppm"
+			});
+
+			Render(black);
+			return;
+		}
+
+		if (elapsed > std::chrono::seconds(m_run.timeOut) + delta)
 		{
 			Render(m_responseView);
+			return;
 		}
-		else
-		{
-			Render(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
-			m_shouldFlicker = !m_shouldFlicker;
-		}
+		
+		Render(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
+		m_shouldFlicker = !m_shouldFlicker;
 	}
 #pragma endregion
 

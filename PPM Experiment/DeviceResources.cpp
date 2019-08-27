@@ -513,7 +513,7 @@ void DX::DeviceResources::GoFullscreen(int i)
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 
-	auto flipped = i;
+	auto flipped = 1 - i;
 
 	ComPtr<IDXGIOutput> output;
 	auto hr = adapter.Get()->EnumOutputs(flipped, output.GetAddressOf());

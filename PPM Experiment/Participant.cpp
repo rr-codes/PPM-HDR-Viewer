@@ -33,8 +33,7 @@ namespace Experiment
 	std::ostream& operator<<(std::ostream& os, const Participant& p)
 	{
 		char buf[1024];
-		sprintf_s(buf, 1024, "ID: %s\nAge: %d\nGender: %s\nSession: %d", 
-			p.id.c_str(), 
+		sprintf_s(buf, 1024, "# Age: %d\n# Gender: %s\n# Session: %d", 
 			p.age, 
 			p.gender == Male ? "Male" : "Female", 
 			p.session
@@ -46,12 +45,12 @@ namespace Experiment
 
 	std::ostream& operator<<(std::ostream& os, const Run& r)
 	{
-		os << "Group: " << r.group << "\n" << r.participant << std::endl;
-		os << "\nDirectory, Image, Side, Position-X, Position-Y, Mode, Response, Duration" << std::endl;
+		os << "# Group: " << r.group << "\n" << r.participant << std::endl;
+		os << "Directory, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 
 		for (auto& trial : r.trials)
 		{
-			os << trial << "\n";
+			os << trial << ", " << r.participant.id << "\n";
 		}
 
 		return os;

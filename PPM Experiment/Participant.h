@@ -51,7 +51,7 @@ namespace Experiment {
 
 		float flickerRate = 0.1f;
 		int timeOut = 8;
-		int intermediateDuration = 300;
+		int intermediateDuration = 500;
 
 		int distance = 60;
 		Vector dimensions = {1200, 1000};

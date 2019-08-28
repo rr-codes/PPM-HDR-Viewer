@@ -34,7 +34,6 @@ namespace Experiment {
 
 	struct Participant
 	{
-		int session = 0;
 		std::string id = "0";
 		int age = 0;
 		Gender gender = Male;
@@ -44,7 +43,7 @@ namespace Experiment {
 
 	struct Run
 	{
-		int group = 0;
+		int session = 0;
 		std::string originalImageDirectory = "";
 
 		Participant participant = {};

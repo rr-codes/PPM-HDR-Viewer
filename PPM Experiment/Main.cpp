@@ -16,6 +16,7 @@
 #include "tinyfiledialogs.h"
 #include <commctrl.h>
 #include "resource.h"
+#include "UserDictionary.h"
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")
@@ -50,46 +51,9 @@ Experiment::Run Configure()
 		0
 	);
 
-	Experiment::Participant p = {};
-
-	p.session = string::to_int(tinyfd_inputBox(
-		"Session ID",
-		"Enter the Session ID",
-		"0"
-	));
-
-	p.id = tinyfd_inputBox(
-		"Subject Name",
-		"Enter Subject Name",
-		"0"
-	);
-
-
-	p.age = string::to_int(tinyfd_inputBox(
-		"Subject Age",
-		"Enter Subject Age",
-		"0"
-	));
-
-
-	std::string gender_s = tinyfd_inputBox(
-		"Subject Gender",
-		"Enter Subject Gender (M/F)",
-		"M"
-	);
-
-	p.gender = (gender_s == "M" || gender_s == "m")
-		? Experiment::Male
-		: Experiment::Female;
-
-	const std::wstring empty;
-	if (file == empty) exit(0);
-
 	auto run = Experiment::Run::CreateRun(file);
-	run.participant = p;
 
-	const auto ws = L"Confirm the experimental configuration:\nGroup:\t" + std::to_wstring(run.group)
-		+ L"\nSession:\t"	+ std::to_wstring(run.participant.session)
+	const auto ws = L"Confirm the experimental configuration:\nSession:\t" + std::to_wstring(run.session)
 		+ L"\nName:\t"		+ string::to_wstring(run.participant.id)
 		+ L"\nAge:\t"		+ std::to_wstring(run.participant.age)
 		+ L"\nGender:\t"	+ (run.participant.gender == Experiment::Female ? L"Female" : L"Male");

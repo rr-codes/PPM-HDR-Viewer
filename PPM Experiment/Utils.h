@@ -18,6 +18,22 @@ namespace vector
 
 namespace Utils
 {
+	static std::string FormatTime(const std::string& format, time_t time)
+	{
+		struct tm buffer{};
+		localtime_s(&buffer, &time);
+
+		char formatted[64];
+		strftime(formatted, sizeof(formatted), format.c_str(), &buffer);
+
+		return std::string(formatted);
+	}
+
+	template<typename _Clock, typename _Duration>
+	static std::string FormatTime(const std::string& format, std::chrono::time_point<_Clock, _Duration> time)
+	{
+		return FormatTime(format, std::chrono::system_clock::to_time_t(time));
+	}
 
 	static void FatalError(const std::string& message)
 	{
@@ -60,6 +76,13 @@ namespace Utils
 namespace string
 {
 	using string_ref = const std::string &;
+
+	template<typename EnumT>
+	static std::string NameOf(EnumT element, std::vector<std::string> enumNames)
+	{
+		const auto i = static_cast<int>(element);
+		return i >= enumNames.size() ? "" : enumNames[i];
+	}
 
 	static std::string to_string(wchar_t* ws)
 	{

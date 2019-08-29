@@ -5,36 +5,31 @@
 
 namespace Experiment
 {
-	std::string GetCodec(const std::string& dir)
+	static CompressionConfiguration GetCodec(const std::string& dir)
 	{
-		if (std::regex_match(dir, std::regex("(control)")))
-		{
-			return "CONTROL";
-		}
-
 		if (std::regex_match(dir, std::regex(".*(DSC).*")))
 		{
-			const std::regex base_regex(".*DSCv1\\.2_VESATestSet_\\d+bpc_.+_(.*?)bpp_SH=\\d+_SPL=\\d+_0000");
+			const std::regex base_regex(R"(.*DSCv1\.2_VESATestSet_\d+bpc_.+_(.*?)bpp_SH=\d+_SPL=\d+_0000)");
 			std::smatch base_match;
 
 			if (std::regex_match(dir, base_match, base_regex))
 			{
-				return "DSC " + base_match[1].str();
+				return { Codec::DSC, std::stoi(base_match[1].str()) };
 			}
 		}
 
 		if (std::regex_match(dir, std::regex(".*(VDCM).*")))
 		{
-			const std::regex base_regex(".*VESATestSet.+_bpc=\\d+_bpp=(.*?)\\.0000_spl=\\d+_csc_bypass=.*");
+			const std::regex base_regex(R"(.*VESATestSet.+_bpc=\d+_bpp=(.*?)\.0000_spl=\d+_csc_bypass=.*)");
 			std::smatch base_match;
 
 			if (std::regex_match(dir, base_match, base_regex))
 			{
-				return "VDCM " + base_match[1].str();
+				return { Codec::VDCM, std::stoi(base_match[1].str()) };
 			}
 		}
 
-		return "NULL";
+		return {Codec::Control, 0};
 	}
 	
 	std::ostream& operator<<(std::ostream& os, const Trial& t)
@@ -47,11 +42,20 @@ namespace Experiment
 		default: mode = "Stereo";
 		}
 
-		auto codec = GetCodec(t.directory);
+		const auto compression = GetCodec(t.directory);
+		
+		std::string codec;
+		switch (compression.codec)
+		{
+		case Codec::VDCM: codec = "VDCM"; break;
+		case Codec::DSC: codec = "DSC"; break;
+		default: codec = "Control";
+		}
 
 		char buf[1024];
-		sprintf_s(buf, 1024, "%s, %s, %s, %d, %d, %s, %s, %.1f",
+		sprintf_s(buf, 1024, "%s %d, %s, %s, %d, %d, %s, %s, %.1f",
 			codec.c_str(),
+			compression.bpc,
 			t.imageName.c_str(),
 			t.correctOption == Left ? "Left" : "Right",
 			t.position.x,

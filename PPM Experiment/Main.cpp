@@ -16,7 +16,6 @@
 #include "tinyfiledialogs.h"
 #include <commctrl.h>
 #include "resource.h"
-#include "UserDictionary.h"
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")

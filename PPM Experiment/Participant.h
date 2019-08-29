@@ -12,6 +12,16 @@ namespace Experiment {
 	enum Mode	{ Stereo, Mono_Left, Mono_Right };
 	enum Gender { Male = 1, Female = 2 };
 
+	enum class Codec { Control, DSC, VDCM };
+
+	struct CompressionConfiguration
+	{
+		Codec codec = Codec::Control;
+		int bpc = 0;
+	};
+
+	static CompressionConfiguration GetCodec(const std::string& dir);
+
 	struct Vector
 	{
 		int x = 0, y = 0;

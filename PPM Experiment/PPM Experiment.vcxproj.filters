@@ -97,12 +97,6 @@
     <ClInclude Include="csv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserDictionary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="date.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PPM Experiment.rc">
@@ -124,6 +118,5 @@
     <None Include="black\blackscreen_R.ppm">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="packages.config" />
   </ItemGroup>
 </Project>

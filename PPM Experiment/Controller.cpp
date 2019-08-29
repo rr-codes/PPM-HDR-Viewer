@@ -1,7 +1,6 @@
 #include "Controller.h"
 #include <utility>
 #include <ctime>
-#include "date.h"
 
 extern void ExitGame();
 
@@ -104,13 +103,12 @@ namespace Experiment {
 
 		if (1 + m_currentImageIndex >= m_run.trials.size())
 		{
-			const auto s = date::format("%Y-%m-%d_%H-%M", std::chrono::system_clock::now());
+			const auto s = Utils::FormatTime("%Y-%m-%d_%H-%M", std::chrono::system_clock::now());
 
 			const auto path = DESTINATION_PATH
 				+ m_run.participant.id
-				+ std::to_string(m_run.session)
-				+ "_" + s
-				+ ".csv";
+				+ "_" + std::to_string(m_run.session)
+				+ "_" + s + ".csv";
 
 			m_run.Export(path);
 

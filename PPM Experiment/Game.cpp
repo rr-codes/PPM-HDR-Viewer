@@ -182,8 +182,27 @@ namespace Experiment
 
 			m_spriteBatch->Begin();
 
-			m_spriteBatch->Draw(duo_view.views[i].left.Get(), duo_view.positions.left);
-			m_spriteBatch->Draw(duo_view.views[i].right.Get(), duo_view.positions.right);
+			m_spriteBatch->Draw(
+				duo_view.views[i].left.Get(), 
+				duo_view.positions.left, 
+				nullptr, 
+				DirectX::Colors::White, 
+				0, 
+				DirectX::g_XMZero, 
+				1,
+				DirectX::SpriteEffects_FlipHorizontally
+			);
+
+			m_spriteBatch->Draw(
+				duo_view.views[i].right.Get(),
+				duo_view.positions.right,
+				nullptr,
+				DirectX::Colors::White,
+				0,
+				DirectX::g_XMZero,
+				1,
+				DirectX::SpriteEffects_FlipHorizontally
+			);
 
 			m_spriteBatch->End();
 

@@ -105,15 +105,17 @@ namespace Experiment {
 		{
 			const auto s = Utils::FormatTime("%Y-%m-%d_%H-%M", std::chrono::system_clock::now());
 
-			const auto path = DESTINATION_PATH
-				+ m_run.participant.id
-				+ "_" + std::to_string(m_run.session)
-				+ "_" + s + ".csv";
+			const auto path = DESTINATION_PATH + m_run.participant.id + "_" + s + ".csv";
 
 			m_run.Export(path);
 
 			ExitGame();
 			exit(0);
+		}
+
+		if ((1 + m_currentImageIndex) % m_run.SessionsPerTrial() == 0)
+		{
+			m_startButtonHasBeenPressed = false;
 		}
 	}
 

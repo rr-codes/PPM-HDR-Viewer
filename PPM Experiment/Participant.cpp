@@ -83,7 +83,6 @@ namespace Experiment
 
 	std::ostream& operator<<(std::ostream& os, const Run& r)
 	{
-		os << "# Session: " << r.session << std::endl;
 		os << r.participant << std::endl;
 		os << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 		
@@ -103,27 +102,31 @@ namespace Experiment
 		file.close();
 	}
 
-	/// Session#
-	/// Original image directory [C:\parent\child\orig]
-	/// id
+	/// Number of sessions
+	/// id [alphanumeric]
 	/// age
 	/// gender [M/F]
+	/// Original image directory [C:\parent\child\orig]
 	/// image directory [C:\parent\...], image name, side [1/2], position x, position y, viewing mode [0/1/2]
 	///
 	/// Image directory MUST end in either 'VESATestSetRGB_444_bpc=10_bpp=*.0000_spl=2_csc_bypass=off' or 'DSCv1.2_VESATestSet_10bpc_RGB_444_*bpp_SH=108_SPL=2_0000'
 	Run Run::CreateRun(const std::filesystem::path& configPath)
 	{
 		auto csv = io::CSVReader<6>(configPath.generic_string());
+		auto reg = std::regex(".*[Mm].*");
 
 		Run run = {};
-		run.session = std::stoi(csv.next_line());
-		run.originalImageDirectory = csv.next_line();
+		run.numberOfSessions = std::stoi(csv.next_line());
 
 		run.participant = {
 			csv.next_line(),
 			std::stoi(csv.next_line()),
-			(std::string(csv.next_line()) == "M") ? Male : Female
+			std::regex_match(csv.next_line(), reg)
+				? Gender::Male
+				: Gender::Female
 		};
+
+		run.originalImageDirectory = csv.next_line();
 
 		std::string directory, imageName;
 		auto correctOption = 0, mode = 0;

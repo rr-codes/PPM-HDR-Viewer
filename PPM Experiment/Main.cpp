@@ -38,7 +38,7 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-Experiment::Run Configure()
+Experiment::Run GetRunFromFileDialog()
 {
 	const wchar_t* filter = { L"*.csv" };
 	const auto file = tinyfd_openFileDialogW(
@@ -52,10 +52,10 @@ Experiment::Run Configure()
 
 	auto run = Experiment::Run::CreateRun(file);
 
-	const auto ws = L"Confirm the experimental configuration:\nSession:\t" + std::to_wstring(run.session)
-		+ L"\nName:\t"		+ string::to_wstring(run.participant.id)
-		+ L"\nAge:\t"		+ std::to_wstring(run.participant.age)
-		+ L"\nGender:\t"	+ (run.participant.gender == Experiment::Female ? L"Female" : L"Male");
+	const auto ws = L"Confirm the experimental configuration:\nNumber of Sessions:\t" + std::to_wstring(run.numberOfSessions)
+		+ L"\nSubject ID:\t"		+ string::to_wstring(run.participant.id)
+		+ L"\nSubject Age:\t"		+ std::to_wstring(run.participant.age)
+		+ L"\nSubject Gender:\t"	+ (run.participant.gender == Experiment::Female ? L"Female" : L"Male");
 
 	auto ok = tinyfd_messageBoxW(
 		L"Confirm Configuration", 
@@ -92,7 +92,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto run = Configure();
+	auto run = GetRunFromFileDialog();
 	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;

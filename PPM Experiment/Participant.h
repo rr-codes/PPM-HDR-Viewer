@@ -20,8 +20,6 @@ namespace Experiment {
 		int bpc = 0;
 	};
 
-	static CompressionConfiguration GetCodec(const std::string& dir);
-
 	struct Vector
 	{
 		int x = 0, y = 0;
@@ -53,7 +51,7 @@ namespace Experiment {
 
 	struct Run
 	{
-		int session = 0;
+		int numberOfSessions = 0;
 		std::string originalImageDirectory = "";
 
 		Participant participant = {};
@@ -69,6 +67,11 @@ namespace Experiment {
 
 		static Run CreateRun(const std::filesystem::path& configPath);
 		void Export(const std::filesystem::path& path) const;
+
+		int SessionsPerTrial() const
+		{
+			return trials.size() / numberOfSessions;
+		}
 
 		friend std::ostream& operator<<(std::ostream& os, const Run& r);
 	};

@@ -68,17 +68,10 @@ namespace Experiment
 
 		const auto dir = std::filesystem::current_path().generic_string() + "/instructions/";
 
-		const auto stereo = m_controller->SetStaticStereoView({
-			dir + "startscreen_L.ppm",
-			dir + "startscreen_R.ppm"
-		});
-
 		m_responseView = m_controller->SetStaticStereoView({
 			dir + "responsescreen_L.ppm",
 			dir + "responsescreen_R.ppm"
 		});
-
-		Render(stereo);
 
 		m_controller->GetFlickerTimer()->Start();
 		m_controller->GetFPSTimer()->Start();
@@ -99,7 +92,6 @@ namespace Experiment
 			Update();
 		});
 	}
-
 
 	void Game::OnEscapeKeyDown()
 	{
@@ -139,32 +131,45 @@ namespace Experiment
 	// Updates the world.
 	void Game::Update()
 	{
+		// before session has started, present the start screen
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
+			const auto dir = std::filesystem::current_path().generic_string() + "/instructions/";
+			
+			const auto stereo = m_controller->SetStaticStereoView({
+			dir + "startscreen_L.ppm",
+			dir + "startscreen_R.ppm"
+			});
+
+			Render(stereo);
+			
 			return;
 		}
 
-		auto elapsed = m_controller->GetStopwatch()->Elapsed();
-		auto delta = std::chrono::milliseconds(m_run.intermediateDuration);
+		const auto elapsed = m_controller->GetStopwatch()->Elapsed();
+		const auto delta = std::chrono::milliseconds(m_run.intermediateDuration);
 
+		// if it is transiting between two images, show a black screen for the duration of the transition (intermediateDuration)
 		if (elapsed < delta)
 		{
 			const auto dir = std::filesystem::current_path().generic_string() + "/black/";
 			auto black = m_controller->SetStaticStereoView({ 
-				dir + "blackscreen_L.ppm", 
-				dir + "blackscreen_R.ppm"
+			dir + "blackscreen_L.ppm", 
+			dir + "blackscreen_R.ppm"
 			});
 
 			Render(black);
 			return;
 		}
 
+		// if more than timeOut time has passed with the image visible, render the response view
 		if (elapsed > std::chrono::seconds(m_run.timeOut) + delta)
 		{
 			Render(m_responseView);
 			return;
 		}
-		
+
+		// under all other circumstances render the appropriate pair of DuoViews
 		Render(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
 		m_shouldFlicker = !m_shouldFlicker;
 	}

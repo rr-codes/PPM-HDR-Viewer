@@ -19,7 +19,7 @@ namespace Experiment {
 		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), dir.c_str());
 
 		this->m_fpstimer = std::make_unique<Utils::Timer<>>(FRAME_INTERVAL);
-		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(m_run.flickerRate * 1000.0);
+		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(Configuration::FlickerRate * 1000.0);
 
 		this->m_stopwatch = std::make_unique<Utils::Stopwatch<>>();
 	}
@@ -53,7 +53,7 @@ namespace Experiment {
 			return false;
 		}
 
-		const auto response = (key == VK_LEFT) ? Right : Left;
+		const auto response = (key == VK_LEFT) ? Option::Right : Option::Left;
 		AppendResponse(response);
 
 		return true;
@@ -85,7 +85,7 @@ namespace Experiment {
 			return false;
 		}
 
-		const auto response = (left == PRESSED) ? Right : Left;
+		const auto response = (left == PRESSED) ? Option::Right : Option::Left;
 		AppendResponse(response);
 
 		return true;
@@ -138,7 +138,7 @@ namespace Experiment {
 
 		auto cropped = (region == nullptr) 
 			? matrix 
-			: CropMatrix(matrix, cv::Rect(region->x, region->y, m_run.dimensions.x, m_run.dimensions.y));
+			: CropMatrix(matrix, cv::Rect(region->x, region->y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;
@@ -196,15 +196,15 @@ namespace Experiment {
 
 		switch (trial.mode)
 		{
-		case Mono_Left:
+		case Mode::Mono_Left:
 			sidePrefixes = { "_L", "_L" };
 			break;
 
-		case Mono_Right:
+		case Mode::Mono_Right:
 			sidePrefixes = { "_R", "_R" };
 			break;
 
-		case Stereo:
+		case Mode::Stereo:
 			sidePrefixes = { "_L", "_R" };
 		}
 
@@ -226,13 +226,13 @@ namespace Experiment {
 		}
 
 		auto left = DirectX::SimpleMath::Vector2(
-			dims.x / 2 - m_run.distance / 2 - m_run.dimensions.x,
-			dims.y / 2 - m_run.dimensions.y / 2
+			dims.x / 2 - Configuration::ImageDistance / 2 - Configuration::ImageDimensions.x,
+			dims.y / 2 - Configuration::ImageDimensions.y / 2
 		);
 
 		auto right = DirectX::SimpleMath::Vector2(
-			dims.x / 2 + m_run.distance / 2,
-			dims.y / 2 - m_run.dimensions.y / 2
+			dims.x / 2 + Configuration::ImageDistance / 2,
+			dims.y / 2 - Configuration::ImageDimensions.y / 2
 		);
 
 		DuoView no_flicker = {};
@@ -244,7 +244,7 @@ namespace Experiment {
 		DuoView flicker = {};
 		flicker.positions = { left, right };
 
-		if (trial.correctOption == Experiment::Left)
+		if (trial.correctOption == Option::Left)
 		{
 			flicker.views.left = { views[0], views[1] };
 			flicker.views.right = { views[2], views[3] };

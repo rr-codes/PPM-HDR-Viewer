@@ -8,11 +8,25 @@
 #include <filesystem>
 
 namespace Experiment {
-	enum Option { None, Left, Right };
-	enum Mode	{ Stereo, Mono_Left, Mono_Right };
-	enum Gender { Male = 1, Female = 2 };
-
-	enum class Codec { Control, DSC, VDCM };
+	enum class Option
+	{
+		None, Left, Right
+	};
+	
+	enum class Mode
+	{
+		Stereo, Mono_Left, Mono_Right
+	};
+	
+	enum class Gender
+	{
+		None, Male, Female
+	};
+	
+	enum class Codec
+	{
+		Control, DSC, VDCM
+	};
 
 	struct CompressionConfiguration
 	{
@@ -20,10 +34,14 @@ namespace Experiment {
 		int bpc = 0;
 	};
 
+	std::ostream& operator<<(std::ostream& os, const CompressionConfiguration& c);
+
 	struct Vector
 	{
 		int x = 0, y = 0;
 	};
+
+	std::ostream& operator<<(std::ostream& os, const Vector& v);
 
 	struct Trial
 	{
@@ -34,20 +52,20 @@ namespace Experiment {
 		Vector position = {};
 		Mode mode = Mode::Stereo;
 
-		Option participantResponse = None;
+		Option participantResponse = Option::None;
 		double duration = 0.0;
-
-		friend std::ostream& operator<<(std::ostream& os, const Trial& t);
 	};
+
+	std::ostream& operator<<(std::ostream& os, const Trial& t);
 
 	struct Participant
 	{
 		std::string id = "0";
 		int age = 0;
-		Gender gender = Male;
-
-		friend std::ostream& operator<<(std::ostream& os, const Participant& p);
+		Gender gender = Gender::None;
 	};
+
+	std::ostream& operator<<(std::ostream& os, const Participant& p);
 
 	struct Run
 	{
@@ -55,29 +73,30 @@ namespace Experiment {
 		std::string originalImageDirectory = "";
 
 		Participant participant = {};
-
-		float flickerRate = 0.1f;
-		int timeOut = 8;
-		int intermediateDuration = 500;
-
-		int distance = 60;
-		Vector dimensions = {1200, 1000};
-
 		std::vector<Trial> trials = {};
 
 		static Run CreateRun(const std::filesystem::path& configPath);
 		void Export(const std::filesystem::path& path) const;
 
-		int SessionsPerTrial() const
+		[[nodiscard]] int SessionsPerTrial() const
 		{
 			return trials.size() / numberOfSessions;
 		}
-
-		friend std::ostream& operator<<(std::ostream& os, const Run& r);
 	};
 
-	std::ostream& operator<<(std::ostream& os, const Trial& t);
-	std::ostream& operator<<(std::ostream& os, const Participant& p);
 	std::ostream& operator<<(std::ostream& os, const Run& r);
+
+	
+	namespace Configuration
+	{
+		using namespace std::chrono;
+
+		constexpr auto FlickerRate = 0.1f;
+		constexpr auto ImageTransitionDuration = milliseconds(500);
+		constexpr auto ImageTimeoutDuration = seconds(8);
+
+		constexpr auto ImageDistance = 60;
+		constexpr auto ImageDimensions = Vector{ 1200, 1000 };
+	}
 
 }

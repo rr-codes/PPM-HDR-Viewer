@@ -55,7 +55,7 @@ Experiment::Run GetRunFromFileDialog()
 	const auto ws = L"Confirm the experimental configuration:\nNumber of Sessions:\t" + std::to_wstring(run.numberOfSessions)
 		+ L"\nSubject ID:\t"		+ string::to_wstring(run.participant.id)
 		+ L"\nSubject Age:\t"		+ std::to_wstring(run.participant.age)
-		+ L"\nSubject Gender:\t"	+ (run.participant.gender == Experiment::Female ? L"Female" : L"Male");
+		+ L"\nSubject Gender:\t"	+ (run.participant.gender == Experiment::Gender::Female ? L"Female" : L"Male");
 
 	auto ok = tinyfd_messageBoxW(
 		L"Confirm Configuration", 
@@ -92,7 +92,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto run = GetRunFromFileDialog();
+	auto run = (__argc != 2) ? GetRunFromFileDialog() : Experiment::Run::CreateRun(__argv[1]);
 	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;

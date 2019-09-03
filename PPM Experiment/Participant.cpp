@@ -31,53 +31,52 @@ namespace Experiment
 
 		return {Codec::Control, 0};
 	}
-	
+
+	std::ostream& operator<<(std::ostream& os, const CompressionConfiguration& c)
+	{
+		switch (c.codec)
+		{
+		case Codec::VDCM: os << "VDCM"; break;
+		case Codec::DSC: os << "DSC"; break;
+		default: os << "Control";
+		}
+
+		os << " " << c.bpc;
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Vector& v)
+	{
+		os << v.x << ", " << v.y;
+		return os;
+	}
+
 	std::ostream& operator<<(std::ostream& os, const Trial& t)
 	{
 		std::string mode;
 		switch (t.mode)
 		{
-		case Mono_Left: mode = "Mono Left"; break;
-		case Mono_Right: mode = "Mono Right"; break;
+		case Mode::Mono_Left: mode = "Mono Left"; break;
+		case Mode::Mono_Right: mode = "Mono Right"; break;
 		default: mode = "Stereo";
 		}
 
 		const auto compression = GetCodec(t.directory);
+
+		os << compression << ", "
+		<< t.imageName << ", "
+		<< (t.correctOption == Option::Left ? "Left" : "Right") << ", "
+		<< t.position << ", "
+		<< mode << ", "
+		<< (t.participantResponse == Option::Left ? "Left" : "Right") << ", "
+		<< t.duration;
 		
-		std::string codec;
-		switch (compression.codec)
-		{
-		case Codec::VDCM: codec = "VDCM"; break;
-		case Codec::DSC: codec = "DSC"; break;
-		default: codec = "Control";
-		}
-
-		char buf[1024];
-		sprintf_s(buf, 1024, "%s %d, %s, %s, %d, %d, %s, %s, %.1f",
-			codec.c_str(),
-			compression.bpc,
-			t.imageName.c_str(),
-			t.correctOption == Left ? "Left" : "Right",
-			t.position.x,
-			t.position.y,
-			mode.c_str(),
-			t.participantResponse == Left ? "Left" : "Right",
-			t.duration
-		);
-
-		os << buf;
 		return os;
 	}
 
 	std::ostream& operator<<(std::ostream& os, const Participant& p)
 	{
-		char buf[1024];
-		sprintf_s(buf, 1024, "# Age: %d\n# Gender: %s", 
-			p.age, 
-			p.gender == Male ? "Male" : "Female"
-		);
-
-		os << buf;
+		os << "#Age: " << p.age << "\n# Gender: " << (p.gender == Gender::Male ? "Male" : "Female");
 		return os;
 	}
 

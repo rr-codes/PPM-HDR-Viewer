@@ -147,7 +147,7 @@ namespace Experiment
 		}
 
 		const auto elapsed = m_controller->GetStopwatch()->Elapsed();
-		const auto delta = std::chrono::milliseconds(m_run.intermediateDuration);
+		const auto delta = Configuration::ImageTransitionDuration;
 
 		// if it is transiting between two images, show a black screen for the duration of the transition (intermediateDuration)
 		if (elapsed < delta)
@@ -163,7 +163,7 @@ namespace Experiment
 		}
 
 		// if more than timeOut time has passed with the image visible, render the response view
-		if (elapsed > std::chrono::seconds(m_run.timeOut) + delta)
+		if (elapsed > Configuration::ImageTimeoutDuration + delta)
 		{
 			Render(m_responseView);
 			return;
@@ -355,7 +355,7 @@ namespace Experiment
 		catch (cv::Exception& e)
 		{
 			auto msg = e.msg;
-			throw e;
+			throw;
 		}
 
 		m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(m_deviceResources->GetD3DDeviceContext());

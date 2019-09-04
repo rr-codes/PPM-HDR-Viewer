@@ -5,7 +5,7 @@
 extern void ExitGame();
 
 namespace Experiment {
-	static const std::string DESTINATION_PATH = R"(C:\Users\lab\Documents\Results\)";
+	static const std::string DESTINATION_PATH = R"(C:\Users\rir\Documents\Results\)";
 	constexpr int FRAME_INTERVAL = 20;
 
 	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
@@ -15,7 +15,8 @@ namespace Experiment {
 
 		m_audioEngine = std::make_unique<DirectX::AudioEngine>(DirectX::AudioEngine_Default);
 
-		const auto dir = std::filesystem::current_path().generic_wstring() + L"/sounds/" + FAILURE;
+		
+		const auto dir = Utils::WorkingDirectory().generic_wstring() + L"/sounds/" + FAILURE;
 		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), dir.c_str());
 
 		this->m_fpstimer = std::make_unique<Utils::Timer<>>(FRAME_INTERVAL);

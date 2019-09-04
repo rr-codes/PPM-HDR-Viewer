@@ -175,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="Controller.h" />
     <ClInclude Include="csv.h" />
+    <ClInclude Include="CSVReader.h" />
     <ClInclude Include="DeviceResources.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Main.h" />

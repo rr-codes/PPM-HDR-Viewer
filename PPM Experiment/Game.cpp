@@ -18,7 +18,7 @@ namespace Experiment
 {
 
 	Game::Game(Run run) noexcept(false) : m_run(std::move(run))
-	{
+	{		
 		m_deviceResources = std::make_unique<DX::DeviceResources>(
 			NUMBER_OF_WINDOWS,
 			DXGI_FORMAT_R10G10B10A2_UNORM,
@@ -66,7 +66,7 @@ namespace Experiment
 
 		m_stereoViews = m_controller->SetFlickerStereoViews(m_run.trials[0]);
 
-		const auto dir = std::filesystem::current_path().generic_string() + "/instructions/";
+		const auto dir = Utils::WorkingDirectory().generic_string() + "/instructions/";
 
 		m_responseView = m_controller->SetStaticStereoView({
 			dir + "responsescreen_L.ppm",
@@ -134,7 +134,7 @@ namespace Experiment
 		// before session has started, present the start screen
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
-			const auto dir = std::filesystem::current_path().generic_string() + "/instructions/";
+			const auto dir = Utils::WorkingDirectory().generic_string() + "/instructions/";
 			
 			const auto stereo = m_controller->SetStaticStereoView({
 			dir + "startscreen_L.ppm",
@@ -152,7 +152,7 @@ namespace Experiment
 		// if it is transiting between two images, show a black screen for the duration of the transition (intermediateDuration)
 		if (elapsed < delta)
 		{
-			const auto dir = std::filesystem::current_path().generic_string() + "/black/";
+			const auto dir = Utils::WorkingDirectory().generic_string() + "/black/";
 			auto black = m_controller->SetStaticStereoView({ 
 			dir + "blackscreen_L.ppm", 
 			dir + "blackscreen_R.ppm"

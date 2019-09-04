@@ -18,6 +18,36 @@ namespace vector
 
 namespace Utils
 {
+	static std::string GetRoot(const std::string& path)
+	{
+		std::string directory;
+		const auto last_slash_idx = path.rfind('\\');
+		if (std::string::npos != last_slash_idx)
+		{
+			directory = path.substr(0, last_slash_idx);
+		}
+
+		return directory;
+	}
+	
+	static std::filesystem::path WorkingDirectory()
+	{
+		wchar_t buffer[MAX_PATH];
+		GetModuleFileName(nullptr, buffer, MAX_PATH);
+		
+		std::wstring ws(buffer);
+		std::string exePath(ws.begin(), ws.end());
+
+		for (auto i = 0; i < 3; i++)
+		{
+			exePath = GetRoot(exePath);
+		}
+
+		exePath += "\\PPM Experiment";
+
+		return exePath;
+	}
+	
 	static std::string FormatTime(const std::string& format, time_t time)
 	{
 		struct tm buffer{};

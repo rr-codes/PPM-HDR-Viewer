@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "csv.h"
 #include <regex>
+#include "CSVReader.h"
 
 namespace Experiment
 {
@@ -32,6 +33,45 @@ namespace Experiment
 		return {Codec::Control, 0};
 	}
 
+	std::istream& operator>>(std::istream& is, Option& o)
+	{
+		std::string s;
+		is >> s;
+
+		o = static_cast<Option>(std::stoi(s));
+		return is;
+	}
+
+	std::istream& operator>>(std::istream& is, Mode& m)
+	{
+		std::string s;
+		is >> s;
+
+		m = static_cast<Mode>(std::stoi(s));
+		return is;
+	}
+
+	std::istream& operator>>(std::istream& is, Gender& g)
+	{
+		std::string s;
+		is >> s;
+
+		if (s == "m" || s == "M")
+		{
+			g = Gender::Male;
+		}
+		else if (s == "f" || s == "F")
+		{
+			g = Gender::Female;
+		}
+		else
+		{
+			Utils::FatalError("Could not cast to type Gender");
+		}
+
+		return is;
+	}
+
 	std::ostream& operator<<(std::ostream& os, const CompressionConfiguration& c)
 	{
 		switch (c.codec)
@@ -41,7 +81,7 @@ namespace Experiment
 		default: os << "Control";
 		}
 
-		os << " " << c.bpc;
+		os << " " << c.bpc << " bpp";
 		return os;
 	}
 
@@ -64,19 +104,19 @@ namespace Experiment
 		const auto compression = GetCodec(t.directory);
 
 		os << compression << ", "
-		<< t.imageName << ", "
-		<< (t.correctOption == Option::Left ? "Left" : "Right") << ", "
-		<< t.position << ", "
-		<< mode << ", "
-		<< (t.participantResponse == Option::Left ? "Left" : "Right") << ", "
-		<< t.duration;
+			<< t.imageName << ", "
+			<< (t.correctOption == Option::Left ? "Left" : "Right") << ", "
+			<< t.position << ", "
+			<< mode << ", "
+			<< (t.participantResponse == Option::Left ? "Left" : "Right") << ", "
+			<< t.duration;
 		
 		return os;
 	}
 
 	std::ostream& operator<<(std::ostream& os, const Participant& p)
 	{
-		os << "#Age: " << p.age << "\n# Gender: " << (p.gender == Gender::Male ? "Male" : "Female");
+		os << "#  Age: " << p.age << "\n# Gender: " << (p.gender == Gender::Male ? "Male" : "Female");
 		return os;
 	}
 
@@ -88,7 +128,7 @@ namespace Experiment
 		for (auto& trial : r.trials)
 		{
 			os << trial << ", " << r.participant.id << "\n";
-		}
+		} 
 
 		return os;
 	}
@@ -111,34 +151,33 @@ namespace Experiment
 	/// Image directory MUST end in either 'VESATestSetRGB_444_bpc=10_bpp=*.0000_spl=2_csc_bypass=off' or 'DSCv1.2_VESATestSet_10bpc_RGB_444_*bpp_SH=108_SPL=2_0000'
 	Run Run::CreateRun(const std::filesystem::path& configPath)
 	{
-		auto csv = io::CSVReader<6>(configPath.generic_string());
-		auto reg = std::regex(".*[Mm].*");
+		if (!exists(configPath) || configPath.extension() != ".csv")
+		{
+			Utils::FatalError(configPath.generic_string() + " is not a valid path");
+		}
+		
+		std::ifstream file(configPath);
+		auto csv = Utils::CSV<std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
-		run.numberOfSessions = std::stoi(csv.next_line());
+		run.numberOfSessions = csv.get_line<int>();
 
 		run.participant = {
-			csv.next_line(),
-			std::stoi(csv.next_line()),
-			std::regex_match(csv.next_line(), reg)
-				? Gender::Male
-				: Gender::Female
+			csv.get_line(),
+			csv.get_line<int>(),
+			csv.get_line<Gender>()
 		};
 
-		run.originalImageDirectory = csv.next_line();
+		run.originalImageDirectory = csv.get_line();
 
-		std::string directory, imageName;
-		auto correctOption = 0, mode = 0;
-		int x, y;
-
-		while (csv.read_row(directory, imageName, correctOption, x, y, mode))
+		for (auto [directory, name, option, x, y, mode] : csv)
 		{
 			run.trials.push_back(Trial{
 				directory,
-				imageName,
-				static_cast<Option>(correctOption),
+				name,
+				option,
 				{x, y},
-				static_cast<Mode>(mode)
+				mode
 			});
 		}
 

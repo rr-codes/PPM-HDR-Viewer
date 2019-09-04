@@ -38,42 +38,6 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-Experiment::Run GetRunFromFileDialog()
-{
-	const wchar_t* filter = { L"*.csv" };
-	const auto file = tinyfd_openFileDialogW(
-		L"Select Configuration FIle",
-		nullptr,
-		1,
-		&filter,
-		L"CSV",
-		0
-	);
-
-	auto run = Experiment::Run::CreateRun(file);
-
-	const auto ws = L"Confirm the experimental configuration:\nNumber of Sessions:\t" + std::to_wstring(run.numberOfSessions)
-		+ L"\nSubject ID:\t"		+ string::to_wstring(run.participant.id)
-		+ L"\nSubject Age:\t"		+ std::to_wstring(run.participant.age)
-		+ L"\nSubject Gender:\t"	+ (run.participant.gender == Experiment::Gender::Female ? L"Female" : L"Male");
-
-	auto ok = tinyfd_messageBoxW(
-		L"Confirm Configuration", 
-		ws.c_str(), 
-		L"okcancel", 
-		L"info", 
-		1
-	);
-
-	if (!ok)
-	{
-		Utils::FatalError("You selected 'Cancel'. The application will now quit.");
-		exit(1);
-	}
-
-	return run;
-}
-
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
@@ -92,7 +56,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto run = (__argc != 2) ? GetRunFromFileDialog() : Experiment::Run::CreateRun(__argv[1]);
+	auto run = Experiment::Run::CreateRun(lpCmdLine);
+	
 	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;

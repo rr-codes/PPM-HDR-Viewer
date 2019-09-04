@@ -12,16 +12,22 @@ namespace Experiment {
 	{
 		None, Left, Right
 	};
+
+	std::istream& operator>>(std::istream& is, Option& o);
 	
 	enum class Mode
 	{
 		Stereo, Mono_Left, Mono_Right
 	};
+
+	std::istream& operator>>(std::istream& is, Mode& m);
 	
 	enum class Gender
 	{
 		None, Male, Female
 	};
+
+	std::istream& operator>>(std::istream& is, Gender& g);
 	
 	enum class Codec
 	{

@@ -26,7 +26,8 @@ namespace Utils
 			start_ = true;
 		}
 
-		void Tick(const std::function<void()> update)
+		template<typename F>
+		void Tick(F&& update)
 		{
 			if (!start_)
 			{

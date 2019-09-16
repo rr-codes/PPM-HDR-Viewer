@@ -15,7 +15,6 @@
 
 namespace Experiment {
 
-	using string_ref = const std::string &;
 
 	// A basic game implementation that creates a D3D11 device and
 	// provides a game loop.
@@ -25,7 +24,7 @@ namespace Experiment {
 		Game(Run run) noexcept(false);
 
 		// Initialization and management
-		void Initialize(HWND windows[], int width, int height);
+		void Initialize(HWND window, int width, int height);
 		// Basic game loop
 		void Tick();
 		void OnEscapeKeyDown();
@@ -40,13 +39,13 @@ namespace Experiment {
 		void OnDeactivated();
 		void OnSuspending();
 		void OnResuming();
-		void OnWindowMoved(int i);
-		void OnWindowSizeChanged(int i, int width, int height);
+		void OnWindowMoved();
+		void OnWindowSizeChanged(int width, int height);
 
 		// Properties
 		void GetDefaultSize(int& width, int& height) const;
 
-		void Clear(int i);
+		void Clear();
 
 	private:
 
@@ -58,16 +57,19 @@ namespace Experiment {
 		/// This renders a single fullscreen stereo image from a Duo of ShaderViews
 		void Render(const SingleView& single_view);
 
+		template<typename F>
+		void RenderBase(F&& drawFunction);
+
 		void CreateDeviceDependentResources();
-		void CreateWindowSizeDependentResources();
+		void CreateWindowSizeDependentResources() const;
 
 		// Device resources.
 		std::unique_ptr<DX::DeviceResources> m_deviceResources;
 
 		std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
-		std::array<std::unique_ptr<DX::RenderTexture>, 2>			m_hdrScene;
-		std::array<std::unique_ptr<DirectX::ToneMapPostProcess>, 2>	m_toneMap;
+		std::unique_ptr<DX::RenderTexture>		m_hdrScene;
+		std::unique_ptr<DirectX::ToneMapPostProcess>	m_toneMap;
 
 		bool m_shouldFlicker = false;
 

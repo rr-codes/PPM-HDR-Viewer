@@ -4,23 +4,19 @@
 
 #include "pch.h"
 #include "Game.h"
-#include <synchapi.h>
 #include <filesystem>
-#include <iostream>
-#include <fstream>
 #include <utility>
 #include "Controller.h"
 #include "Stopwatch.h"
 
 extern void ExitGame();
 
-namespace Experiment 
+namespace Experiment
 {
 
 	Game::Game(Run run) noexcept(false) : m_run(std::move(run))
-	{		
+	{
 		m_deviceResources = std::make_unique<DX::DeviceResources>(
-			NUMBER_OF_WINDOWS,
 			DXGI_FORMAT_R10G10B10A2_UNORM,
 			DXGI_FORMAT_D32_FLOAT,
 			2,
@@ -34,22 +30,17 @@ namespace Experiment
 		// m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
 		// m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
-			m_hdrScene[i] = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
-		}
+		m_hdrScene = std::make_unique<DX::RenderTexture>(DXGI_FORMAT_R16G16B16A16_FLOAT);
 	}
 
 	// Initialize the Direct3D resources required to run.
-	void Game::Initialize(HWND windows[], int width, int height)
+	void Game::Initialize(HWND window, int width, int height)
 	{
 		while (ShowCursor(false) >= 0)
 		{
 		}
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-		{
-			m_deviceResources->SetWindow(i, windows[i], width, height);
-		}
+		m_deviceResources->SetWindow(window, width, height);
 
 		m_deviceResources->CreateDeviceResources();
 		CreateDeviceDependentResources();
@@ -59,10 +50,7 @@ namespace Experiment
 
 		m_gamePad = std::make_unique<DirectX::GamePad>();
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-		{
-			m_deviceResources->GoFullscreen(i);
-		}
+		m_deviceResources->GoFullscreen();
 
 		m_stereoViews = m_controller->SetFlickerStereoViews(m_run.trials[0]);
 
@@ -82,29 +70,22 @@ namespace Experiment
 	void Game::Tick()
 	{
 		m_controller->GetFPSTimer()->Tick([&]()
-		{
-			m_controller->GetAudioEngine()->Update();
-			OnGamePadButton();
-		});
+			{
+				m_controller->GetAudioEngine()->Update();
+				OnGamePadButton();
+			});
 
-		m_controller->GetFlickerTimer()->Tick([&]()
-		{
-			Update();
-		});
+		m_controller->GetFlickerTimer()->Tick(&Update);
 	}
 
 	void Game::OnEscapeKeyDown()
 	{
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-		{
-			m_deviceResources->GetSwapChain(i)->SetFullscreenState(false, nullptr);
-		}
+		m_deviceResources->GetSwapChain()->SetFullscreenState(false, nullptr);
 
 		delete m_controller;
 
 		m_spriteBatch.reset();
 		m_gamePad.reset();
-
 
 		m_deviceResources.reset();
 		exit(0);
@@ -116,7 +97,7 @@ namespace Experiment
 		const auto state = m_gamePad->GetState(0);
 
 		auto shouldGoToNextImage = state.IsConnected()
-			? m_controller->GetResponse(state) 
+			? m_controller->GetResponse(state)
 			: m_controller->GetResponse(key);
 
 		if (shouldGoToNextImage)
@@ -124,6 +105,7 @@ namespace Experiment
 			auto q = m_run.trials[++m_controller->m_currentImageIndex];
 			m_stereoViews = m_controller->SetFlickerStereoViews(q);
 
+			Update();
 			m_controller->GetStopwatch()->Restart();
 		}
 	}
@@ -135,14 +117,14 @@ namespace Experiment
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
 			const auto dir = Utils::WorkingDirectory().generic_string() + "/instructions/";
-			
+
 			const auto stereo = m_controller->SetStaticStereoView({
-			dir + "startscreen_L.ppm",
-			dir + "startscreen_R.ppm"
+				dir + "startscreen_L.ppm",
+				dir + "startscreen_R.ppm"
 			});
 
 			Render(stereo);
-			
+
 			return;
 		}
 
@@ -153,9 +135,9 @@ namespace Experiment
 		if (elapsed < delta)
 		{
 			const auto dir = Utils::WorkingDirectory().generic_string() + "/black/";
-			auto black = m_controller->SetStaticStereoView({ 
-			dir + "blackscreen_L.ppm", 
-			dir + "blackscreen_R.ppm"
+			auto black = m_controller->SetStaticStereoView({
+				dir + "blackscreen_L.ppm",
+				dir + "blackscreen_R.ppm"
 			});
 
 			Render(black);
@@ -177,105 +159,77 @@ namespace Experiment
 
 	void Game::Render(const DuoView& duo_view)
 	{
-		auto context = m_deviceResources->GetD3DDeviceContext();
-
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+		RenderBase([&](int i)
 		{
-			Clear(i);
-
-			m_deviceResources->PIXBeginEvent(L"Render");
-
-			m_spriteBatch->Begin();
-
-			m_spriteBatch->Draw(
-				duo_view.views[i].left.Get(), 
-				duo_view.positions.left, 
-				nullptr, 
-				DirectX::Colors::White, 
-				0, 
-				DirectX::g_XMZero, 
-				1,
-				DirectX::SpriteEffects_FlipHorizontally
-			);
-
-			m_spriteBatch->Draw(
-				duo_view.views[i].right.Get(),
-				duo_view.positions.right,
-				nullptr,
-				DirectX::Colors::White,
-				0,
-				DirectX::g_XMZero,
-				1,
-				DirectX::SpriteEffects_FlipHorizontally
-			);
-
-			m_spriteBatch->End();
-
-			m_deviceResources->PIXEndEvent();
-
-			auto renderTarget = m_deviceResources->GetRenderTargetView(i);
-			context->OMSetRenderTargets(1, &renderTarget, nullptr);
-
-			m_toneMap[i]->Process(context);
-		}
-
-		ID3D11ShaderResourceView* nullsrv[] = { nullptr };
-		context->PSSetShaderResources(0, 1, nullsrv);
-
-		m_deviceResources->ThreadPresent();
-
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-		{
-			m_deviceResources->DiscardView(i);
-		}
+			for (size_t j = 0; j < 2; j++)
+			{
+				m_spriteBatch->Draw(
+					duo_view[i][j].image.Get(),
+					duo_view[i][j].position,
+					nullptr,
+					DirectX::Colors::White,
+					0,
+					DirectX::g_XMZero,
+					1.0,
+					DirectX::SpriteEffects_FlipHorizontally
+				);
+			}
+		});
 	}
 
 	void Game::Render(const SingleView& single_view)
 	{
+		RenderBase([&](int i)
+		{
+			m_spriteBatch->Draw(single_view[i].image.Get(), single_view[i].position);
+		});
+	}
+
+	template<typename F>
+	void Game::RenderBase(F&& drawFunction)
+	{
+		
 		auto context = m_deviceResources->GetD3DDeviceContext();
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
+		Clear();
+
+		m_deviceResources->PIXBeginEvent(L"Render");
+
+		m_spriteBatch->Begin();
+
+		for (size_t i = 0; i < 2; ++i)
 		{
-			Clear(i);
-
-			m_deviceResources->PIXBeginEvent(L"Render");
-
-			m_spriteBatch->Begin();
-			
-			m_spriteBatch->Draw(single_view[i].Get(), DirectX::SimpleMath::Vector2{ 0, 0 });
-
-			m_spriteBatch->End();
-
-			m_deviceResources->PIXEndEvent();
-
-			auto renderTarget = m_deviceResources->GetRenderTargetView(i);
-			context->OMSetRenderTargets(1, &renderTarget, nullptr);
-
-			m_toneMap[i]->Process(context);
+			drawFunction(i);
 		}
+
+		m_spriteBatch->End();
+
+		m_deviceResources->PIXEndEvent();
+
+		auto renderTarget = m_deviceResources->GetRenderTargetView();
+		context->OMSetRenderTargets(1, &renderTarget, nullptr);
+
+		m_toneMap->Process(context);
 
 		ID3D11ShaderResourceView* nullsrv[] = { nullptr };
 		context->PSSetShaderResources(0, 1, nullsrv);
 
 		m_deviceResources->ThreadPresent();
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-		{
-			m_deviceResources->DiscardView(i);
-		}
+		m_deviceResources->DiscardView();
 	}
 
 #pragma region Frame Render
 	// Helper method to clear the back buffers.
-	void Game::Clear(int i)
+	void Game::Clear()
 	{
 		m_deviceResources->PIXBeginEvent(L"Clear");
 
 		// Clear the views.
 		auto context = m_deviceResources->GetD3DDeviceContext();
 
-		auto renderTarget = m_hdrScene[i]->GetRenderTargetView();
-		auto depthStencil = m_deviceResources->GetDepthStencilView();
+		auto renderTarget = m_hdrScene->GetRenderTargetView();
+		const auto depthStencil = m_deviceResources->GetDepthStencilView();
 
 		DirectX::XMVECTORF32 color;
 		auto actual = DirectX::FXMVECTOR({ {0, 0, 0, 0} });
@@ -321,15 +275,15 @@ namespace Experiment
 		m_buttons.Reset();
 	}
 
-	void Game::OnWindowMoved(int i)
+	void Game::OnWindowMoved()
 	{
 		auto r = m_deviceResources->GetOutputSize();
-		m_deviceResources->WindowSizeChanged(i, r.right, r.bottom);
+		m_deviceResources->WindowSizeChanged(r.right, r.bottom);
 	}
 
-	void Game::OnWindowSizeChanged(int i, int width, int height)
+	void Game::OnWindowSizeChanged(int width, int height)
 	{
-		if (!m_deviceResources->WindowSizeChanged(i, width, height))
+		if (!m_deviceResources->WindowSizeChanged(width, height))
 			return;
 
 		CreateWindowSizeDependentResources();
@@ -338,8 +292,8 @@ namespace Experiment
 	// Properties
 	void Game::GetDefaultSize(int& width, int& height) const
 	{
-		width = 1920;
-		height = 1080;
+		width = 7680;
+		height = 2160;
 	}
 #pragma endregion
 
@@ -360,32 +314,26 @@ namespace Experiment
 
 		m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(m_deviceResources->GetD3DDeviceContext());
 
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
-			m_hdrScene[i]->SetDevice(device);
-			m_toneMap[i] = std::make_unique<DirectX::ToneMapPostProcess>(device);
+		m_hdrScene->SetDevice(device);
+		m_toneMap = std::make_unique<DirectX::ToneMapPostProcess>(device);
 
-			m_toneMap[i]->SetST2084Parameter(64);
-		}
+		m_toneMap->SetST2084Parameter(64);
 	}
 
 	// Allocate all memory resources that change on a window SizeChanged event.
-	void Game::CreateWindowSizeDependentResources()
+	void Game::CreateWindowSizeDependentResources() const
 	{
 		auto size = m_deviceResources->GetOutputSize();
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
-			m_hdrScene[i]->SetWindow(size);
+		m_hdrScene->SetWindow(size);
 
-			m_toneMap[i]->SetHDRSourceTexture(m_hdrScene[i]->GetShaderResourceView());
-		}
+		m_toneMap->SetHDRSourceTexture(m_hdrScene->GetShaderResourceView());
 	}
 
 	void Game::OnDeviceLost()
 	{
-		for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
-			m_hdrScene[i]->ReleaseDevice();
+		m_hdrScene->ReleaseDevice();
 
-			m_toneMap[i].reset();
-		}
+		m_toneMap.reset();
 	}
 
 	void Game::OnDeviceRestored()

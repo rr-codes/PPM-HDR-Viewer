@@ -5,6 +5,7 @@
 #pragma once
 #include <wrl/client.h>
 #include "pch.h"
+#include <dxgidebug.h>
 
 namespace DX
 {
@@ -28,7 +29,6 @@ namespace DX
 		static const unsigned int c_EnableHDR = 0x4;
 
 		DeviceResources(
-			int numWindows = 1,
 			DXGI_FORMAT backBufferFormat = DXGI_FORMAT_B8G8R8A8_UNORM,
 			DXGI_FORMAT depthBufferFormat = DXGI_FORMAT_D32_FLOAT,
 			UINT backBufferCount = 2,
@@ -38,11 +38,11 @@ namespace DX
 
 		void CreateDeviceResources();
 		void CreateWindowSizeDependentResources();
-		void SetWindow(int i, HWND window, int width, int height);
-		bool WindowSizeChanged(int i, int width, int height);
+		void SetWindow(HWND window, int width, int height);
+		bool WindowSizeChanged(int width, int height);
 		void HandleDeviceLost();
 		void ThreadPresent();
-		void DiscardView(int i);
+		void DiscardView();
 		void RegisterDeviceNotify(IDeviceNotify* deviceNotify) { m_deviceNotify = deviceNotify; }
 
 		// Device Accessors.
@@ -51,11 +51,11 @@ namespace DX
 		// Direct3D Accessors.
 		ID3D11Device1* GetD3DDevice() const { return m_d3dDevice.Get(); }
 		ID3D11DeviceContext1* GetD3DDeviceContext() const { return m_d3dContext.Get(); }
-		IDXGISwapChain1* GetSwapChain(int i) const { return m_swapChain[i].Get(); }
+		IDXGISwapChain1* GetSwapChain() const { return m_swapChain.Get(); }
 		D3D_FEATURE_LEVEL       GetDeviceFeatureLevel() const { return m_d3dFeatureLevel; }
-		ID3D11Texture2D* GetRenderTarget(int i) const { return m_renderTarget[i].Get(); }
+		ID3D11Texture2D* GetRenderTarget() const { return m_renderTarget.Get(); }
 		ID3D11Texture2D* GetDepthStencil() const { return m_depthStencil.Get(); }
-		ID3D11RenderTargetView* GetRenderTargetView(int i) const { return m_d3dRenderTargetView[i].Get(); }
+		ID3D11RenderTargetView* GetRenderTargetView() const { return m_d3dRenderTargetView.Get(); }
 		ID3D11DepthStencilView* GetDepthStencilView() const { return m_d3dDepthStencilView.Get(); }
 		DXGI_FORMAT             GetBackBufferFormat() const { return m_backBufferFormat; }
 		DXGI_FORMAT             GetDepthBufferFormat() const { return m_depthBufferFormat; }
@@ -89,7 +89,7 @@ namespace DX
 			m_d3dAnnotation->SetMarker(name);
 		}
 
-		void GoFullscreen(int i);
+		void GoFullscreen();
 
 		Microsoft::WRL::ComPtr<ID3D11Device1>               m_d3dDevice;
 
@@ -97,12 +97,12 @@ namespace DX
 	private:
 		void CreateFactory();
 		void GetHardwareAdapter(IDXGIAdapter1** ppAdapter);
-		void UpdateColorSpace(int i);
+		void UpdateColorSpace();
 
-		std::array<Microsoft::WRL::ComPtr<IDXGISwapChain1>, 2>			m_swapChain;
-		std::array<Microsoft::WRL::ComPtr<ID3D11Texture2D>, 2>			m_renderTarget;
-		std::array<Microsoft::WRL::ComPtr<ID3D11RenderTargetView>, 2>	m_d3dRenderTargetView;
-		std::array<HWND, 2> m_window;
+		Microsoft::WRL::ComPtr<IDXGISwapChain1>			m_swapChain;
+		Microsoft::WRL::ComPtr<ID3D11Texture2D>		m_renderTarget;
+		Microsoft::WRL::ComPtr<ID3D11RenderTargetView>	m_d3dRenderTargetView;
+		HWND m_window;
 
 		// Direct3D objects.
 		Microsoft::WRL::ComPtr<IDXGIFactory2>               m_dxgiFactory;
@@ -134,7 +134,6 @@ namespace DX
 		// The IDeviceNotify can be held directly as it owns the DeviceResources.
 		IDeviceNotify* m_deviceNotify;
 
-		int m_numWindows;
 
 		DirectX::SimpleMath::Vector2 dimensions;
 

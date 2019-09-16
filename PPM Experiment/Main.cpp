@@ -13,21 +13,16 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
-#include "tinyfiledialogs.h"
-#include <commctrl.h>
-#include "resource.h"
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")
 
-HWND* windows;
 
 using string_ref = const std::string &;
 
-namespace
-{
-	std::unique_ptr<Experiment::Game> g_game;
-};
+std::unique_ptr<Experiment::Game> g_game;
+HWND window;
+
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -57,65 +52,58 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	g_game->GetDefaultSize(w, h);
 
 	auto run = Experiment::Run::CreateRun(lpCmdLine);
-	
+
 	g_game = std::make_unique<Experiment::Game>(run);
 
 	RECT rc;
 
-	windows = new HWND[NUMBER_OF_WINDOWS];
+	LPCWSTR name = L"RIGHT";
 
-	for (int i = 0; i < NUMBER_OF_WINDOWS; i++) {
+	rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
 
-		// Register class and create window
-		{
-			LPCWSTR name = (i == 0) ? L"LEFT" : L"RIGHT";
+	// Register class
+	WNDCLASSEXW wcex = {};
+	wcex.cbSize = sizeof(WNDCLASSEXW);
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = WndProc;
+	wcex.hInstance = hInstance;
+	wcex.hIcon = LoadIconW(hInstance, L"IDI_ICON");
+	wcex.hCursor = LoadCursorW(nullptr, IDC_CROSS);
+	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+	wcex.lpszClassName = name;
+	wcex.hIconSm = LoadIconW(wcex.hInstance, L"IDI_ICON");
 
-			rc = { 0, 0, static_cast<LONG>(w), static_cast<LONG>(h) };
+	if (!RegisterClassExW(&wcex)) {
+		auto err = GetLastError();
+		auto hr = HRESULT_FROM_WIN32(err);
 
-			// Register class
-			WNDCLASSEXW wcex = {};
-			wcex.cbSize = sizeof(WNDCLASSEXW);
-			wcex.style = CS_HREDRAW | CS_VREDRAW;
-			wcex.lpfnWndProc = WndProc;
-			wcex.hInstance = hInstance;
-			wcex.hIcon = LoadIconW(hInstance, L"IDI_ICON");
-			wcex.hCursor = LoadCursorW(nullptr, IDC_CROSS);
-			wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-			wcex.lpszClassName = name;
-			wcex.hIconSm = LoadIconW(wcex.hInstance, L"IDI_ICON");
-			if (!RegisterClassExW(&wcex)) {
-				auto err = GetLastError();
-				auto hr = HRESULT_FROM_WIN32(err);
-
-				_com_error err2(hr);
-				auto str = err2.ErrorMessage();
-				return 1;
-			}
-
-			// Create window
-
-
-			AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-
-			windows[i] = CreateWindowExW(0, name, name, WS_OVERLAPPED,
-				CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
-				nullptr);
-			// TODO: Change to CreateWindowExW(WS_EX_TOPMOST, L"$safeprojectname$WindowClass", L"$projectname$", WS_POPUP,
-			// to default to fullscreen.
-
-			if (!windows[i])
-				return 1;
-
-			ShowWindow(windows[i], nCmdShow);
-			// TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
-
-			SetWindowLongPtr(windows[i], GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
-
-			GetClientRect(windows[i], &rc);
-		}
+		_com_error err2(hr);
+		auto str = err2.ErrorMessage();
+		return 1;
 	}
 
-	g_game->Initialize(windows, rc.right - rc.left, rc.bottom - rc.top);
+	// Create window
+
+
+	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
+
+	window = CreateWindowExW(0, name, name, WS_OVERLAPPED,
+		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
+		nullptr);
+	// TODO: Change to CreateWindowExW(WS_EX_TOPMOST, L"$safeprojectname$WindowClass", L"$projectname$", WS_POPUP,
+	// to default to fullscreen.
+
+	if (!window)
+		return 1;
+
+	ShowWindow(window, nCmdShow);
+	// TODO: Change nCmdShow to SW_SHOWMAXIMIZED to default to fullscreen.
+
+	SetWindowLongPtr(window, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(g_game.get()));
+
+	GetClientRect(window, &rc);
+
+	g_game->Initialize(window, rc.right - rc.left, rc.bottom - rc.top);
 
 	// Main message loop
 	while (WM_QUIT != msg.message)
@@ -148,12 +136,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static bool s_minimized = false;
 	static bool s_fullscreen = false;
 	// TODO: Set s_fullscreen to true if defaulting to fullscreen.
-
-	auto wndIndex = 0;
-	for (int i = 0; i < NUMBER_OF_WINDOWS; i++)
-	{
-		if (windows[i] == hWnd) wndIndex = i;
-	}
 
 	auto game = reinterpret_cast<Experiment::Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
@@ -192,7 +174,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MOVE:
 		if (game)
 		{
-			game->OnWindowMoved(wndIndex);
+			game->OnWindowMoved();
 		}
 		break;
 
@@ -216,7 +198,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		else if (!s_in_sizemove && game)
 		{
-			game->OnWindowSizeChanged(wndIndex, LOWORD(lParam), HIWORD(lParam));
+			game->OnWindowSizeChanged(LOWORD(lParam), HIWORD(lParam));
 		}
 		break;
 
@@ -231,7 +213,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			RECT rc;
 			GetClientRect(hWnd, &rc);
 
-			game->OnWindowSizeChanged(wndIndex, rc.right - rc.left, rc.bottom - rc.top);
+			game->OnWindowSizeChanged(rc.right - rc.left, rc.bottom - rc.top);
 		}
 		break;
 

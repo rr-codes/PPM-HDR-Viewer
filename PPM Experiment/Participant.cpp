@@ -1,11 +1,12 @@
 #include "Participant.h"
 #include "Utils.h"
-#include "csv.h"
+#include "CSV.h"
 #include <regex>
-#include "CSVReader.h"
 
 namespace Experiment
 {
+	using CSV::TupleHelper::operator<<;
+
 	static CompressionConfiguration GetCodec(const std::string& dir)
 	{
 		if (std::regex_match(dir, std::regex(".*(DSC).*")))
@@ -103,20 +104,22 @@ namespace Experiment
 
 		const auto compression = GetCodec(t.directory);
 
-		os << compression << ", "
-			<< t.imageName << ", "
-			<< (t.correctOption == Option::Left ? "Left" : "Right") << ", "
-			<< t.position << ", "
-			<< mode << ", "
-			<< (t.participantResponse == Option::Left ? "Left" : "Right") << ", "
-			<< t.duration;
+		os << std::tuple(
+			compression, 
+			t.imageName, 
+			(t.correctOption == Option::Left ? "Left" : "Right"),
+			t.position,
+			mode,
+			(t.participantResponse == Option::Left ? "Left" : "Right"),
+			t.duration
+		);
 		
 		return os;
 	}
 
 	std::ostream& operator<<(std::ostream& os, const Participant& p)
 	{
-		os << "#  Age: " << p.age << "\n# Gender: " << (p.gender == Gender::Male ? "Male" : "Female");
+		os << "# Age: " << p.age << "\n# Gender: " << (p.gender == Gender::Male ? "Male" : "Female");
 		return os;
 	}
 
@@ -127,7 +130,7 @@ namespace Experiment
 		
 		for (auto& trial : r.trials)
 		{
-			os << trial << ", " << r.participant.id << "\n";
+			os << std::tuple(trial, r.participant.id) << "\n";
 		} 
 
 		return os;
@@ -157,22 +160,16 @@ namespace Experiment
 		}
 		
 		std::ifstream file(configPath);
-		auto csv = Utils::CSV<std::string, std::string, Option, int, int, Mode>(file);
+		auto csv = CSV::Reader<std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
-		run.numberOfSessions = csv.get_line<int>();
-
-		run.participant = {
-			csv.get_line(),
-			csv.get_line<int>(),
-			csv.get_line<Gender>()
-		};
-
-		run.originalImageDirectory = csv.get_line();
+		file >> run.numberOfSessions
+			>> run.participant.id >> run.participant.age >> run.participant.gender
+			>> run.originalImageDirectory;
 
 		for (auto [directory, name, option, x, y, mode] : csv)
 		{
-			run.trials.push_back(Trial{
+			run.trials.push_back({
 				directory,
 				name,
 				option,
@@ -180,7 +177,7 @@ namespace Experiment
 				mode
 			});
 		}
-
+		
 		return run;
 	}
 }

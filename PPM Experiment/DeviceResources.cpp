@@ -44,7 +44,7 @@ namespace
 };
 
 // Constructor for DeviceResources.
-DX::DeviceResources::DeviceResources(int numWindows, DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, unsigned int flags) noexcept :
+DX::DeviceResources::DeviceResources(DXGI_FORMAT backBufferFormat, DXGI_FORMAT depthBufferFormat, UINT backBufferCount, D3D_FEATURE_LEVEL minFeatureLevel, unsigned int flags) noexcept :
 	m_screenViewport{},
 	m_backBufferFormat(backBufferFormat),
 	m_depthBufferFormat(depthBufferFormat),
@@ -55,8 +55,7 @@ DX::DeviceResources::DeviceResources(int numWindows, DXGI_FORMAT backBufferForma
 	m_outputSize{ 0, 0, 1, 1 },
 	m_colorSpace(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709),
 	m_options(flags | c_FlipPresent),
-	m_deviceNotify(nullptr),
-	m_numWindows(numWindows)
+	m_deviceNotify(nullptr)
 {
 	// m_window = new HWND[m_numWindows];
 	// m_renderTarget = new Microsoft::WRL::ComPtr<ID3D11Texture2D>[m_numWindows];
@@ -69,17 +68,17 @@ void DX::DeviceResources::CreateDeviceResources()
 {
 	UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-// #if defined(_DEBUG)
-// 	if (SdkLayersAvailable())
-// 	{
-// 		// If the project is in a debug build, enable debugging via SDK Layers with this flag.
-// 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
-// 	}
-// 	else
-// 	{
-// 		OutputDebugStringA("WARNING: Direct3D Debug Device is not available\n");
-// 	}
-// #endif
+	// #if defined(_DEBUG)
+	// 	if (SdkLayersAvailable())
+	// 	{
+	// 		// If the project is in a debug build, enable debugging via SDK Layers with this flag.
+	// 		creationFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	// 	}
+	// 	else
+	// 	{
+	// 		OutputDebugStringA("WARNING: Direct3D Debug Device is not available\n");
+	// 	}
+	// #endif
 
 	CreateFactory();
 
@@ -241,7 +240,7 @@ void DX::DeviceResources::CreateDeviceResources()
 // These resources need to be recreated every time the window size is changed.
 void DX::DeviceResources::CreateWindowSizeDependentResources()
 {
-	if (m_window[0] == nullptr)
+	if (m_window == nullptr)
 	{
 		throw std::exception("Call SetWindow with a valid Win32 window handle");
 	}
@@ -250,10 +249,8 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 	ID3D11RenderTargetView* nullViews[] = { nullptr };
 	m_d3dContext->OMSetRenderTargets(_countof(nullViews), nullViews, nullptr);
 
-	for (int i = 0; i < m_numWindows; i++) {
-		m_d3dRenderTargetView[i].Reset();
-		m_renderTarget[i].Reset();
-	}
+	m_d3dRenderTargetView.Reset();
+	m_renderTarget.Reset();
 
 	m_d3dDepthStencilView.Reset();
 	m_depthStencil.Reset();
@@ -265,91 +262,90 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 	DXGI_FORMAT backBufferFormat = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? NoSRGB(m_backBufferFormat) : m_backBufferFormat;
 
 	this->dimensions = DirectX::SimpleMath::Vector2(
-		backBufferWidth, 
+		backBufferWidth,
 		backBufferHeight
 	);
 
-	for (int i = 0; i < m_numWindows; i++) {
 
-		if (m_swapChain[i])
+	if (m_swapChain)
+	{
+		// If the swap chain already exists, resize it.
+		HRESULT hr = m_swapChain->ResizeBuffers(
+			m_backBufferCount,
+			backBufferWidth,
+			backBufferHeight,
+			backBufferFormat,
+			(m_options & c_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u
+		);
+
+		if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
 		{
-			// If the swap chain already exists, resize it.
-			HRESULT hr = m_swapChain[i]->ResizeBuffers(
-				m_backBufferCount,
-				backBufferWidth,
-				backBufferHeight,
-				backBufferFormat,
-				(m_options & c_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u
-			);
-
-			if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET)
-			{
 #ifdef _DEBUG
-				char buff[64] = {};
-				sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr);
-				OutputDebugStringA(buff);
+			char buff[64] = {};
+			sprintf_s(buff, "Device Lost on ResizeBuffers: Reason code 0x%08X\n", (hr == DXGI_ERROR_DEVICE_REMOVED) ? m_d3dDevice->GetDeviceRemovedReason() : hr);
+			OutputDebugStringA(buff);
 #endif
-				// If the device was removed for any reason, a new device and swap chain will need to be created.
-				HandleDeviceLost();
+			// If the device was removed for any reason, a new device and swap chain will need to be created.
+			HandleDeviceLost();
 
-				// Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
-				// and correctly set up the new device.
-				return;
-			}
-			else
-			{
-				ThrowIfFailed(hr);
-			}
+			// Everything is set up now. Do not continue execution of this method. HandleDeviceLost will reenter this method
+			// and correctly set up the new device.
+			return;
 		}
 		else
 		{
-			// Create a descriptor for the swap chain.
-			DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-			swapChainDesc.Width = backBufferWidth;
-			swapChainDesc.Height = backBufferHeight;
-			swapChainDesc.Format = backBufferFormat;
-			swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-			swapChainDesc.BufferCount = m_backBufferCount;
-			swapChainDesc.SampleDesc.Count = 1;
-			swapChainDesc.SampleDesc.Quality = 0;
-			swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-			swapChainDesc.SwapEffect = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
-			swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-			swapChainDesc.Flags = (m_options & c_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
-
-			DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
-			fsSwapChainDesc.Windowed = TRUE;
-
-			// Create a SwapChain from a Win32 window.
-			ThrowIfFailed(m_dxgiFactory->CreateSwapChainForHwnd(
-				m_d3dDevice.Get(),
-				m_window[i],
-				&swapChainDesc,
-				&fsSwapChainDesc,
-				nullptr,
-				m_swapChain[i].ReleaseAndGetAddressOf()
-			));
-
-
-			// This class does not support exclusive full-screen mode and prevents DXGI from responding to the ALT+ENTER shortcut
-			(m_dxgiFactory->MakeWindowAssociation(m_window[i], DXGI_MWA_NO_ALT_ENTER));
-
+			ThrowIfFailed(hr);
 		}
-
-		// Handle color space settings for HDR
-		UpdateColorSpace(i);
-
-		// Create a render target view of the swap chain back buffer.
-		ThrowIfFailed(m_swapChain[i]->GetBuffer(0, IID_PPV_ARGS(m_renderTarget[i].ReleaseAndGetAddressOf())));
-
-		CD3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc(D3D11_RTV_DIMENSION_TEXTURE2D, m_backBufferFormat);
-
-		ThrowIfFailed(m_d3dDevice->CreateRenderTargetView(
-			m_renderTarget[i].Get(),
-			&renderTargetViewDesc,
-			m_d3dRenderTargetView[i].ReleaseAndGetAddressOf()
-		));
 	}
+	else
+	{
+		// Create a descriptor for the swap chain.
+		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+		swapChainDesc.Width = backBufferWidth;
+		swapChainDesc.Height = backBufferHeight;
+		swapChainDesc.Format = backBufferFormat;
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		swapChainDesc.BufferCount = m_backBufferCount;
+		swapChainDesc.SampleDesc.Count = 1;
+		swapChainDesc.SampleDesc.Quality = 0;
+		swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
+		swapChainDesc.SwapEffect = (m_options & (c_FlipPresent | c_AllowTearing | c_EnableHDR)) ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+		swapChainDesc.Flags = (m_options & c_AllowTearing) ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0u;
+
+		DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
+		fsSwapChainDesc.Windowed = TRUE;
+
+		// Create a SwapChain from a Win32 window.
+		ThrowIfFailed(m_dxgiFactory->CreateSwapChainForHwnd(
+			m_d3dDevice.Get(),
+			m_window,
+			&swapChainDesc,
+			&fsSwapChainDesc,
+			nullptr,
+			m_swapChain.ReleaseAndGetAddressOf()
+		));
+
+
+		// This class does not support exclusive full-screen mode and prevents DXGI from responding to the ALT+ENTER shortcut
+		(m_dxgiFactory->MakeWindowAssociation(m_window, DXGI_MWA_NO_ALT_ENTER));
+
+	}
+
+	// Handle color space settings for HDR
+	UpdateColorSpace();
+
+	// Create a render target view of the swap chain back buffer.
+	ThrowIfFailed(m_swapChain->GetBuffer(0, IID_PPV_ARGS(m_renderTarget.ReleaseAndGetAddressOf())));
+
+	CD3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc(D3D11_RTV_DIMENSION_TEXTURE2D, m_backBufferFormat);
+
+	ThrowIfFailed(m_d3dDevice->CreateRenderTargetView(
+		m_renderTarget.Get(),
+		&renderTargetViewDesc,
+		m_d3dRenderTargetView.ReleaseAndGetAddressOf()
+	));
+
 
 	if (m_depthBufferFormat != DXGI_FORMAT_UNKNOWN)
 	{
@@ -387,9 +383,9 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 }
 
 // This method is called when the Win32 window is created (or re-created).
-void DX::DeviceResources::SetWindow(int i, HWND window, int width, int height)
+void DX::DeviceResources::SetWindow(HWND window, int width, int height)
 {
-	m_window[i] = window;
+	m_window = window;
 
 	m_outputSize.left = m_outputSize.top = 0;
 	m_outputSize.right = width;
@@ -397,7 +393,7 @@ void DX::DeviceResources::SetWindow(int i, HWND window, int width, int height)
 }
 
 // This method is called when the Win32 window changes size
-bool DX::DeviceResources::WindowSizeChanged(int i, int width, int height)
+bool DX::DeviceResources::WindowSizeChanged(int width, int height)
 {
 	RECT newRc;
 	newRc.left = newRc.top = 0;
@@ -406,7 +402,7 @@ bool DX::DeviceResources::WindowSizeChanged(int i, int width, int height)
 	if (newRc == m_outputSize)
 	{
 		// Handle color space settings for HDR
-		UpdateColorSpace(i);
+		UpdateColorSpace();
 
 		return false;
 	}
@@ -427,12 +423,9 @@ void DX::DeviceResources::HandleDeviceLost()
 	m_d3dDepthStencilView.Reset();
 	m_depthStencil.Reset();
 
-	for (int i = 0; i < m_numWindows; i++)
-	{
-		m_d3dRenderTargetView[i].Reset();
-		m_renderTarget[i].Reset();
-		m_swapChain[i].Reset();
-	}
+	m_d3dRenderTargetView.Reset();
+	m_renderTarget.Reset();
+	m_swapChain.Reset();
 
 	m_d3dContext.Reset();
 	m_d3dAnnotation.Reset();
@@ -461,14 +454,11 @@ void DX::DeviceResources::HandleDeviceLost()
 
 void DX::DeviceResources::ThreadPresent()
 {
-	for (int i = 0; i < m_numWindows; i++)
-	{
-		m_swapChain[i]->Present(1, 0);
-	}
+	m_swapChain->Present(1, 0);
 }
 
 // DiscardView the contents of the swap chain to the screen.
-void DX::DeviceResources::DiscardView(int i)
+void DX::DeviceResources::DiscardView()
 {
 	//auto hr = m_swapChain[i]->Present(1, 0);
 
@@ -476,7 +466,7 @@ void DX::DeviceResources::DiscardView(int i)
 	// Discard the contents of the render target.
 	// This is a valid operation only when the existing contents will be entirely
 	// overwritten. If dirty or scroll rects are used, this call should be removed.
-	m_d3dContext->DiscardView(m_d3dRenderTargetView[i].Get());
+	m_d3dContext->DiscardView(m_d3dRenderTargetView.Get());
 
 	if (m_d3dDepthStencilView)
 	{
@@ -507,30 +497,29 @@ void DX::DeviceResources::DiscardView(int i)
 /**
  * Tells the ith window to go fullscreen on the ith output (monitor).
  */
-void DX::DeviceResources::GoFullscreen(int i)
+void DX::DeviceResources::GoFullscreen()
 {
 #ifndef _DEBUG
 	ComPtr<IDXGIAdapter1> adapter;
 	GetHardwareAdapter(adapter.GetAddressOf());
 
-	auto flipped = i;
 
 	ComPtr<IDXGIOutput> output;
-	auto hr = adapter.Get()->EnumOutputs(flipped, output.GetAddressOf());
+	auto hr = adapter.Get()->EnumOutputs(0, output.GetAddressOf());
 
 	if (FAILED(hr))
 	{
-		Utils::FatalError("Index exceeds number of outputs (index: 1, outputs: 1)");
+		Utils::FatalError("Fullscreen error");
 	}
 
-	hr = m_swapChain[i]->SetFullscreenState(true, output.Get());
+	hr = m_swapChain->SetFullscreenState(true, output.Get());
 
 	if (FAILED(hr))
 	{
-		Utils::FatalError("Cannot go fullscreen for index " + i);
+		Utils::FatalError("Cannot go fullscreen");
 	}
 
-	UpdateColorSpace(flipped);
+	UpdateColorSpace();
 	CreateWindowSizeDependentResources();
 #endif
 }
@@ -637,15 +626,15 @@ void DX::DeviceResources::GetHardwareAdapter(IDXGIAdapter1** ppAdapter)
 }
 
 // Sets the color space for the swap chain in order to handle HDR output.
-void DX::DeviceResources::UpdateColorSpace(int i)
+void DX::DeviceResources::UpdateColorSpace()
 {
 	bool isDisplayHDR10 = false;
 
 #if defined(NTDDI_WIN10_RS2)
-	if (m_swapChain[i])
+	if (m_swapChain)
 	{
 		ComPtr<IDXGIOutput> output;
-		if (SUCCEEDED(m_swapChain[i]->GetContainingOutput(output.GetAddressOf())))
+		if (SUCCEEDED(m_swapChain->GetContainingOutput(output.GetAddressOf())))
 		{
 			ComPtr<IDXGIOutput6> output6;
 			if (SUCCEEDED(output.As(&output6)))
@@ -666,13 +655,13 @@ void DX::DeviceResources::UpdateColorSpace(int i)
 
 	m_colorSpace = DXGI_COLOR_SPACE_RGB_FULL_G2084_NONE_P2020;
 
-	if (m_swapChain[i] == nullptr)
+	if (m_swapChain == nullptr)
 	{
 		return;
 	}
 
 	ComPtr<IDXGISwapChain3> swapChain3;
-	if (SUCCEEDED(m_swapChain[i].As(&swapChain3)))
+	if (SUCCEEDED(m_swapChain.As(&swapChain3)))
 	{
 		UINT colorSpaceSupport = 0;
 		if (SUCCEEDED(swapChain3->CheckColorSpaceSupport(m_colorSpace, &colorSpaceSupport))

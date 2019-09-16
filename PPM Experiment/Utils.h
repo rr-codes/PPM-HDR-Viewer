@@ -16,8 +16,10 @@ namespace vector
 	}
 }
 
+
 namespace Utils
 {
+
 	static std::string GetRoot(const std::string& path)
 	{
 		std::string directory;
@@ -46,6 +48,21 @@ namespace Utils
 		exePath += "\\PPM Experiment";
 
 		return exePath;
+	}
+
+	static std::filesystem::path HomeDirectory()
+	{
+		char* buf = nullptr;
+		size_t sz = 0;
+
+		if (_dupenv_s(&buf, &sz, "USERPROFILE") == 0 && buf != nullptr)
+		{
+			auto s = std::string(buf);
+		    free(buf);
+			return s;
+		}
+
+		return "C:/";
 	}
 	
 	static std::string FormatTime(const std::string& format, time_t time)
@@ -86,13 +103,20 @@ namespace Utils
 	{
 		T left, right;
 
-		T operator[](int i) const
+		T& operator[](int i)
 		{
 			if (i == 0) return left;
 			if (i == 1) return right;
 
-			FatalError("Index of Duo Out of Bounds");
-			return left;
+			throw std::out_of_range("");
+		}
+
+		const T& operator[](int i) const
+		{
+			if (i == 0) return left;
+			if (i == 1) return right;
+
+			throw std::out_of_range("");
 		}
 
 		Duo flipped()

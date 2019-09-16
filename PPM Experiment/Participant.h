@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <filesystem>
+#include "DeviceResources.h"
 
 namespace Experiment {
 	enum class Option

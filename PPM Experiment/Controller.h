@@ -6,19 +6,17 @@
 
 constexpr auto FAILURE = L"Success3.wav";
 
-namespace Experiment {
-
-	using Microsoft::WRL::ComPtr;
-
-	struct DuoView
+namespace Experiment
+{
+	struct Image
 	{
-		// The outer Duo is the windows, and the inner Duo the images in each window
-		Utils::Duo<Utils::Duo<ComPtr<ID3D11ShaderResourceView>>> views = {};
-
-		Utils::Duo<DirectX::SimpleMath::Vector2> positions;
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> image;
+		DirectX::SimpleMath::Vector2 position;
 	};
 
-	using SingleView = Utils::Duo<ComPtr<ID3D11ShaderResourceView>>;
+	using DuoView = Utils::Duo<Utils::Duo<Image>>;
+	using SingleView = Utils::Duo<Image>;
+	
 
 	class Controller
 	{
@@ -37,18 +35,18 @@ namespace Experiment {
 
 		[[nodiscard]] Utils::Stopwatch<>* GetStopwatch() const { return m_stopwatch.get(); }
 
-		DirectX::AudioEngine* GetAudioEngine() const { return m_audioEngine.get(); }
+		[[nodiscard]] DirectX::AudioEngine* GetAudioEngine() const { return m_audioEngine.get(); }
 
 		int m_currentImageIndex = 0;
 		bool m_startButtonHasBeenPressed = false;
 
 	private:
-		[[nodiscard]] ComPtr<ID3D11ShaderResourceView> ConvertImageToResource(
-			const std::filesystem::path& image,
-			Vector* region
-		) const;
-
 		void AppendResponse(Option response);
+		
+		[[nodiscard]] Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResource(const std::filesystem::path& image) const;
+		[[nodiscard]] Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResource(const std::filesystem::path& image, Vector region) const;
+		template <class F>
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResourceBase(const std::filesystem::path& image,  F&& matTransformFunction) const;
 
 		DX::DeviceResources* m_deviceResources;
 		Experiment::Run m_run;

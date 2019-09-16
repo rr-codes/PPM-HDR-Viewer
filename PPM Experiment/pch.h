@@ -79,7 +79,6 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #include <stdio.h>
 #include <vector>
 
-#define NUMBER_OF_WINDOWS 2
 #define FULLSCREEN
 
 // convenience typealiases

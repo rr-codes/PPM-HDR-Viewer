@@ -5,8 +5,8 @@
 extern void ExitGame();
 
 namespace Experiment {
-	static const std::string DESTINATION_PATH = R"(C:\Users\rir\Documents\Results\)";
-	constexpr int FRAME_INTERVAL = 20;
+	static const std::string DESTINATION_PATH = Utils::HomeDirectory().generic_string() +  R"(\Documents\Results\)";
+	constexpr int FRAME_INTERVAL = 1000 / 60;
 
 	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
 	{
@@ -60,8 +60,12 @@ namespace Experiment {
 		return true;
 	}
 
+	double timeAtPress = 0;
+
 	bool Controller::GetResponse(const DirectX::GamePad::State state)
 	{
+		timeAtPress = m_stopwatch->Elapsed().count();
+		
 		const auto PRESSED = DirectX::GamePad::ButtonStateTracker::PRESSED;
 
 		const auto right = m_buttons.rightTrigger;
@@ -95,7 +99,7 @@ namespace Experiment {
 	void Controller::AppendResponse(const Option response)
 	{
 		m_run.trials[m_currentImageIndex].participantResponse = response;
-		m_run.trials[m_currentImageIndex].duration = m_stopwatch->Elapsed().count();
+		m_run.trials[m_currentImageIndex].duration = timeAtPress;
 
 		if (response != m_run.trials[m_currentImageIndex].correctOption)
 		{
@@ -120,7 +124,25 @@ namespace Experiment {
 		}
 	}
 
-	ComPtr<ID3D11ShaderResourceView> Controller::ConvertImageToResource(const std::filesystem::path& image, Vector* region) const
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image) const
+	{
+		return ToResourceBase(image, [](auto m)
+		{
+			return m;
+		});
+	}
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image, Vector region) const
+	{
+		return ToResourceBase(image, [&](auto m)
+		{
+			return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
+		});
+	}
+
+
+	template<typename F>
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResourceBase(const std::filesystem::path& image, F&& matTransformFunction) const
 	{
 		if (!is_regular_file(image))
 		{
@@ -137,9 +159,7 @@ namespace Experiment {
 		int conversion[] = { 2, 0, 1, 1, 0, 2, -1, 3 };
 		cv::mixChannels(&matrixoriginal, 1, &matrix, 1, conversion, 4);
 
-		auto cropped = (region == nullptr) 
-			? matrix 
-			: CropMatrix(matrix, cv::Rect(region->x, region->y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
+		auto cropped = matTransformFunction(matrix);
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;
@@ -152,6 +172,7 @@ namespace Experiment {
 		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
 		desc.MiscFlags = 0;
+
 
 		auto hr = m_deviceResources->GetD3DDevice()->CreateTexture2D(&desc, nullptr, texture.GetAddressOf());
 
@@ -178,15 +199,20 @@ namespace Experiment {
 
 		return shader;
 	}
+	
 
 	SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
 	{
-		const auto l = ConvertImageToResource(views.left, nullptr);
-		const auto r = ConvertImageToResource(views.right, nullptr);
+		const auto l = ToResource(views.left);
+		const auto r = ToResource(views.right);
 
-		return SingleView{ l, r };
+		const auto dims = m_deviceResources->GetDimensions();
+
+		return {
+			Image{ l, {0, 0} },
+			Image{ r, {dims.x / 2, 0} }
+		};
 	}
-
 
 	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
@@ -216,45 +242,35 @@ namespace Experiment {
 			originalImageStart + sidePrefixes.right + "_orig.ppm",
 		};
 
-		std::vector<ComPtr<ID3D11ShaderResourceView>> views;
+		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
 		const auto dims = m_deviceResources->GetDimensions();
 
 		views.reserve(files.size());
 		for (auto& file : files)
 		{
-			auto region = trial.position;
-			views.push_back(ConvertImageToResource(file, &region));
+			views.push_back(ToResource(file, trial.position));
 		}
 
-		auto left = DirectX::SimpleMath::Vector2(
-			dims.x / 2 - Configuration::ImageDistance / 2 - Configuration::ImageDimensions.x,
-			dims.y / 2 - Configuration::ImageDimensions.y / 2
-		);
+		auto halfDist = static_cast<float>(Configuration::ImageDistance) / 2;
+		auto yPos = dims.y / 2 - static_cast<float>(Configuration::ImageDimensions.y) / 2;
 
-		auto right = DirectX::SimpleMath::Vector2(
-			dims.x / 2 + Configuration::ImageDistance / 2,
-			dims.y / 2 - Configuration::ImageDimensions.y / 2
-		);
+		using Vec = DirectX::SimpleMath::Vector2;
 
-		DuoView no_flicker = {};
-		no_flicker.views.left = { views[1], views[1] };
-		no_flicker.views.right = { views[3], views[3] };
+		auto ll = Vec(dims.x / 4 - halfDist - Configuration::ImageDimensions.x, yPos);
+		auto lr = Vec(dims.x / 4 + halfDist, yPos);
+		auto rl = Vec(dims.x * 3 / 4 - halfDist - Configuration::ImageDimensions.x, yPos);
+		auto rr = Vec(dims.x * 3 / 4 + halfDist, yPos);
 
-		no_flicker.positions = { left, right };
+		DuoView no_flicker = {
+			{Image{views[1], ll}, Image{views[1], lr} },
+			{Image{views[3], rl}, Image{views[3], rr} }
+		};
 
-		DuoView flicker = {};
-		flicker.positions = { left, right };
+		DuoView flicker = no_flicker;
+		auto i = static_cast<int>(trial.correctOption) - 1;
 
-		if (trial.correctOption == Option::Left)
-		{
-			flicker.views.left = { views[0], views[1] };
-			flicker.views.right = { views[2], views[3] };
-		}
-		else
-		{
-			flicker.views.left = { views[1], views[0] };
-			flicker.views.right = { views[3], views[2] };
-		}
+		flicker.left[i].image = views[0];
+		flicker.right[i].image = views[2];
 
 		return std::make_pair(no_flicker, flicker);
 	}

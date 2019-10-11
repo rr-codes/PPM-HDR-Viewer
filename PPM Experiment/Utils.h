@@ -1,56 +1,11 @@
 #pragma once
 #include <string>
-#include <vector>
-#include <iterator>
 #include <filesystem>
-#include "pch.h"
-#include "Participant.h"
 #include <random>
 
-namespace vector
+namespace std::filesystem
 {
-	template <typename Element>
-	static inline bool contains(std::vector<Element> vec, Element element)
-	{
-		return std::find(vec.begin(), vec.end(), element) != vec.end();
-	}
-}
-
-
-namespace Utils
-{
-
-	static std::string GetRoot(const std::string& path)
-	{
-		std::string directory;
-		const auto last_slash_idx = path.rfind('\\');
-		if (std::string::npos != last_slash_idx)
-		{
-			directory = path.substr(0, last_slash_idx);
-		}
-
-		return directory;
-	}
-	
-	static std::filesystem::path WorkingDirectory()
-	{
-		wchar_t buffer[MAX_PATH];
-		GetModuleFileName(nullptr, buffer, MAX_PATH);
-		
-		std::wstring ws(buffer);
-		std::string exePath(ws.begin(), ws.end());
-
-		for (auto i = 0; i < 3; i++)
-		{
-			exePath = GetRoot(exePath);
-		}
-
-		exePath += "\\PPM Experiment";
-
-		return exePath;
-	}
-
-	static std::filesystem::path HomeDirectory()
+	static path home()
 	{
 		char* buf = nullptr;
 		size_t sz = 0;
@@ -64,6 +19,34 @@ namespace Utils
 
 		return "C:/";
 	}
+	
+	static path parent_directory(const path& child, const int levels = 1)
+	{
+		if (levels < 1)
+		{
+			return child;
+		}
+
+		return levels == 1
+			? child.parent_path()
+			: parent_directory(child.parent_path(), levels - 1);
+	}
+
+	static path cwd()
+	{
+		wchar_t buffer[MAX_PATH];
+		GetModuleFileName(nullptr, buffer, MAX_PATH);
+		
+		std::wstring ws(buffer);
+		const path exePath(ws.begin(), ws.end());
+
+		return parent_directory(exePath, 3) / "PPM Experiment";
+	}
+}
+
+
+namespace Utils
+{
 	
 	static std::string FormatTime(const std::string& format, time_t time)
 	{
@@ -118,25 +101,12 @@ namespace Utils
 
 			throw std::out_of_range("");
 		}
-
-		Duo flipped()
-		{
-			return Duo(right, left);
-		}
 	};
 }
 
 
 namespace string
 {
-	using string_ref = const std::string &;
-
-	template<typename EnumT>
-	static std::string NameOf(EnumT element, std::vector<std::string> enumNames)
-	{
-		const auto i = static_cast<int>(element);
-		return i >= enumNames.size() ? "" : enumNames[i];
-	}
 
 	static std::string to_string(wchar_t* ws)
 	{
@@ -164,26 +134,6 @@ namespace string
 	static int to_int(char const* s)
 	{
 		return std::stoi(std::string(s));
-	}
-
-	static std::vector<std::string> split(std::string str, const std::string& delimiter = " ")
-	{
-		size_t pos = 0;
-		std::vector<std::string> vec;
-
-		while ((pos = str.find(delimiter)) != std::string::npos) {
-			auto token = str.substr(0, pos);
-
-			vec.push_back(token);
-			str.erase(0, pos + delimiter.length());
-		}
-
-		return vec;
-	}
-
-	static bool contains(string_ref str, string_ref substr)
-	{
-		return str.find(substr) != std::string::npos;
 	}
 }
 

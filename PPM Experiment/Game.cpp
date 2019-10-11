@@ -13,8 +13,9 @@ extern void ExitGame();
 
 namespace Experiment
 {
+	const static std::string wd = std::filesystem::cwd().generic_string();
 
-	Game::Game(Run run) noexcept(false) : m_run(std::move(run))
+	Game::Game(Run& run) noexcept(false)
 	{
 		m_deviceResources = std::make_unique<DX::DeviceResources>(
 			DXGI_FORMAT_R10G10B10A2_UNORM,
@@ -25,7 +26,7 @@ namespace Experiment
 		);
 
 		m_deviceResources->RegisterDeviceNotify(this);
-		m_controller = new Controller(m_run, m_deviceResources.get());
+		m_controller = new Controller(run, m_deviceResources.get());
 
 		// m_hdrScene = new std::unique_ptr<DX::RenderTexture>[NUMBER_OF_WINDOWS];
 		// m_toneMap = new std::unique_ptr<DirectX::ToneMapPostProcess>[NUMBER_OF_WINDOWS];
@@ -52,13 +53,11 @@ namespace Experiment
 
 		m_deviceResources->GoFullscreen();
 
-		m_stereoViews = m_controller->SetFlickerStereoViews(m_run.trials[0]);
-
-		const auto dir = Utils::WorkingDirectory().generic_string() + "/instructions/";
+		m_stereoViews = m_controller->SetFlickerStereoViews(m_controller->GetRun()->trials[0]);
 
 		m_responseView = m_controller->SetStaticStereoView({
-			dir + "responsescreen_L.ppm",
-			dir + "responsescreen_R.ppm"
+			wd + "/instructions/responsescreen_L.ppm",
+			wd + "/instructions/responsescreen_R.ppm"
 		});
 
 		m_controller->GetFlickerTimer()->Start();
@@ -75,7 +74,7 @@ namespace Experiment
 				OnGamePadButton();
 			});
 
-		m_controller->GetFlickerTimer()->Tick(&Update);
+		m_controller->GetFlickerTimer()->Tick([=](){Update();});
 	}
 
 	void Game::OnEscapeKeyDown()
@@ -102,11 +101,11 @@ namespace Experiment
 
 		if (shouldGoToNextImage)
 		{
-			auto q = m_run.trials[++m_controller->m_currentImageIndex];
-			m_stereoViews = m_controller->SetFlickerStereoViews(q);
-
-			Update();
 			m_controller->GetStopwatch()->Restart();
+			Update();
+
+			auto q = m_controller->GetRun()->trials[++m_controller->m_currentImageIndex];
+			m_stereoViews = m_controller->SetFlickerStereoViews(q);
 		}
 	}
 
@@ -116,15 +115,12 @@ namespace Experiment
 		// before session has started, present the start screen
 		if (!m_controller->m_startButtonHasBeenPressed)
 		{
-			const auto dir = Utils::WorkingDirectory().generic_string() + "/instructions/";
-
 			const auto stereo = m_controller->SetStaticStereoView({
-				dir + "startscreen_L.ppm",
-				dir + "startscreen_R.ppm"
+				wd + "/instructions/startscreen_L.ppm",
+				wd + "/instructions/startscreen_R.ppm"
 			});
 
 			Render(stereo);
-
 			return;
 		}
 
@@ -134,10 +130,9 @@ namespace Experiment
 		// if it is transiting between two images, show a black screen for the duration of the transition (intermediateDuration)
 		if (elapsed < delta)
 		{
-			const auto dir = Utils::WorkingDirectory().generic_string() + "/black/";
 			auto black = m_controller->SetStaticStereoView({
-				dir + "blackscreen_L.ppm",
-				dir + "blackscreen_R.ppm"
+				wd + "/black/blackscreen_L.ppm",
+				wd + "/black/blackscreen_R.ppm"
 			});
 
 			Render(black);

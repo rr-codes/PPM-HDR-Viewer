@@ -178,6 +178,17 @@ namespace Experiment
 			});
 		}
 		
+		std::transform(csv.begin(), csv.end(), run.trials.begin(), [](auto tuple) -> Trial
+		{
+			 return {
+				std::get<0>(tuple),
+				std::get<1>(tuple),
+				std::get<2>(tuple),
+				{std::get<3>(tuple), std::get<4>(tuple)},
+				std::get<5>(tuple)
+			};
+		});
+		
 		return run;
 	}
 }

@@ -5,18 +5,14 @@
 extern void ExitGame();
 
 namespace Experiment {
-	static const std::string DESTINATION_PATH = Utils::HomeDirectory().generic_string() +  R"(\Documents\Results\)";
-	constexpr int FRAME_INTERVAL = 1000 / 60;
+	static const std::string DESTINATION_PATH = std::filesystem::home().generic_string() +  R"(\Documents\Results\)";
+	constexpr int FRAME_INTERVAL = 20;
 
-	Controller::Controller(Run run, DX::DeviceResources* deviceResources)
+	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
 	{
-		this->m_run = std::move(run);
-		this->m_deviceResources = deviceResources;
-
 		m_audioEngine = std::make_unique<DirectX::AudioEngine>(DirectX::AudioEngine_Default);
-
 		
-		const auto dir = Utils::WorkingDirectory().generic_wstring() + L"/sounds/" + FAILURE;
+		const auto dir = std::filesystem::cwd().generic_wstring() + L"/sounds/" + FAILURE;
 		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), dir.c_str());
 
 		this->m_fpstimer = std::make_unique<Utils::Timer<>>(FRAME_INTERVAL);
@@ -210,7 +206,7 @@ namespace Experiment {
 
 		return {
 			Image{ l, {0, 0} },
-			Image{ r, {dims.x / 2, 0} }
+			Image{ r, {3840, 0} }
 		};
 	}
 
@@ -243,7 +239,7 @@ namespace Experiment {
 		};
 
 		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
-		const auto dims = m_deviceResources->GetDimensions();
+		const auto dims = DirectX::SimpleMath::Vector2{3840 * 2, 2160};
 
 		views.reserve(files.size());
 		for (auto& file : files)

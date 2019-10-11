@@ -87,9 +87,20 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
-	window = CreateWindowExW(0, name, name, WS_OVERLAPPED,
-		CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
-		nullptr);
+	window = CreateWindowExW(
+		WS_EX_TOPMOST, 
+		name,
+		name, 
+		WS_POPUP,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		(rc.right - rc.left) * 2, 
+		rc.bottom - rc.top, 
+		nullptr, 
+		nullptr, 
+		hInstance,
+		nullptr
+	);
+	
 	// TODO: Change to CreateWindowExW(WS_EX_TOPMOST, L"$safeprojectname$WindowClass", L"$projectname$", WS_POPUP,
 	// to default to fullscreen.
 

@@ -21,8 +21,8 @@ namespace Experiment {
 	class Game final : public DX::IDeviceNotify
 	{
 	public:
-		Game(Run run) noexcept(false);
 
+		Game(Run& run);
 		// Initialization and management
 		void Initialize(HWND window, int width, int height);
 		// Basic game loop
@@ -76,7 +76,6 @@ namespace Experiment {
 		std::unique_ptr<DirectX::GamePad>  m_gamePad;
 		DirectX::GamePad::ButtonStateTracker m_buttons;
 
-		Run m_run;
 		Controller* m_controller;
 
 		std::pair<DuoView, DuoView> m_stereoViews;

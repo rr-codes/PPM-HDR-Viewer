@@ -3,6 +3,7 @@
 #include "DeviceResources.h"
 #include <GamePad.h>
 #include "Stopwatch.h"
+#include "Participant.h"
 
 constexpr auto FAILURE = L"Success3.wav";
 
@@ -21,7 +22,7 @@ namespace Experiment
 	class Controller
 	{
 	public:
-		Controller(Run run, DX::DeviceResources* deviceResources);
+		Controller(Run& run, DX::DeviceResources* deviceResources);
 
 		[[nodiscard]] std::pair<DuoView, DuoView> SetFlickerStereoViews(const Trial& trial) const;
 
@@ -39,6 +40,11 @@ namespace Experiment
 
 		int m_currentImageIndex = 0;
 		bool m_startButtonHasBeenPressed = false;
+
+		Run* GetRun()
+		{
+			return &m_run;
+		}
 
 	private:
 		void AppendResponse(Option response);

@@ -59,6 +59,8 @@ namespace Experiment {
 		Vector position = {};
 		Mode mode = Mode::Stereo;
 
+		CompressionConfiguration compression = {Codec::Control, 0};
+
 		Option participantResponse = Option::None;
 		double duration = 0.0;
 	};
@@ -67,6 +69,7 @@ namespace Experiment {
 
 	struct Participant
 	{
+		int groupNumber = 0;
 		std::string id = "0";
 		int age = 0;
 		Gender gender = Gender::None;

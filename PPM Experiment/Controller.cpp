@@ -104,11 +104,15 @@ namespace Experiment {
 
 		if (1 + m_currentImageIndex >= m_run.trials.size())
 		{
-			const auto s = Utils::FormatTime("%Y-%m-%d_%H-%M", std::chrono::system_clock::now());
+			const auto s = Utils::FormatTime("%H-%M", std::chrono::system_clock::now());
+			const auto filename = "Group" + std::to_string(m_run.participant.groupNumber)
+				+ "_Session" + std::to_string(m_currentImageIndex)
+				+ "_Id" + m_run.participant.id + "_" + s + ".csv";
 
-			const auto path = DESTINATION_PATH + m_run.participant.id + "_" + s + ".csv";
+			std::stringstream ss;
+			ss << DESTINATION_PATH << m_run.trials[m_currentImageIndex].compression.codec;
 
-			m_run.Export(path);
+			m_run.Export(ss.str());
 
 			ExitGame();
 			exit(0);

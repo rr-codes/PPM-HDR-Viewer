@@ -102,10 +102,8 @@ namespace Experiment
 		default: mode = "Stereo";
 		}
 
-		const auto compression = GetCodec(t.directory);
-
 		os << std::tuple(
-			compression, 
+			t.compression, 
 			t.imageName, 
 			(t.correctOption == Option::Left ? "Left" : "Right"),
 			t.position,
@@ -163,31 +161,21 @@ namespace Experiment
 		auto csv = CSV::Reader<std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
-		file >> run.numberOfSessions
+		file >> run.participant.groupNumber >> run.numberOfSessions
 			>> run.participant.id >> run.participant.age >> run.participant.gender
 			>> run.originalImageDirectory;
 
 		for (auto [directory, name, option, x, y, mode] : csv)
-		{
+		{			
 			run.trials.push_back({
 				directory,
 				name,
 				option,
 				{x, y},
-				mode
+				mode,
+				GetCodec(directory)
 			});
 		}
-		
-		std::transform(csv.begin(), csv.end(), run.trials.begin(), [](auto tuple) -> Trial
-		{
-			 return {
-				std::get<0>(tuple),
-				std::get<1>(tuple),
-				std::get<2>(tuple),
-				{std::get<3>(tuple), std::get<4>(tuple)},
-				std::get<5>(tuple)
-			};
-		});
 		
 		return run;
 	}

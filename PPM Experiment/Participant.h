@@ -86,16 +86,13 @@ namespace Experiment {
 		std::vector<Trial> trials = {};
 
 		static Run CreateRun(const std::filesystem::path& configPath);
-		void Export(const std::filesystem::path& path) const;
+		void Export(const std::filesystem::path& path, int currentSessionIndex) const;
 
 		[[nodiscard]] int SessionsPerTrial() const
 		{
 			return trials.size() / numberOfSessions;
 		}
 	};
-
-	std::ostream& operator<<(std::ostream& os, const Run& r);
-
 	
 	namespace Configuration
 	{

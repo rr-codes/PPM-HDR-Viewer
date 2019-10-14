@@ -5,7 +5,7 @@
 extern void ExitGame();
 
 namespace Experiment {
-	static const std::string DESTINATION_PATH = std::filesystem::home().generic_string() +  R"(\Documents\Results\)";
+	static const std::string DESTINATION_PATH = R"(C:\projects\VESA_3D_HDR_Testing_October_2019\Data\)";
 	constexpr int FRAME_INTERVAL = 20;
 
 	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
@@ -102,25 +102,23 @@ namespace Experiment {
 			m_failureSound->Play();
 		}
 
-		if (1 + m_currentImageIndex >= m_run.trials.size())
+		if ((1 + m_currentImageIndex) % m_run.SessionsPerTrial() == 0)
 		{
 			const auto s = Utils::FormatTime("%H-%M", std::chrono::system_clock::now());
 			const auto filename = "Group" + std::to_string(m_run.participant.groupNumber)
-				+ "_Session" + std::to_string(m_currentImageIndex)
+				+ "_Session" + std::to_string(m_currentSession)
 				+ "_Id" + m_run.participant.id + "_" + s + ".csv";
 
-			std::stringstream ss;
-			ss << DESTINATION_PATH << m_run.trials[m_currentImageIndex].compression.codec;
+			m_run.Export(DESTINATION_PATH + filename, m_currentSession);
 
-			m_run.Export(ss.str());
-
-			ExitGame();
-			exit(0);
+			m_currentSession++;
+			m_startButtonHasBeenPressed = false;
 		}
 
-		if ((1 + m_currentImageIndex) % m_run.SessionsPerTrial() == 0)
+		if (1 + m_currentImageIndex >= m_run.trials.size())
 		{
-			m_startButtonHasBeenPressed = false;
+			ExitGame();
+			exit(0);
 		}
 	}
 

@@ -121,24 +121,19 @@ namespace Experiment
 		return os;
 	}
 
-	std::ostream& operator<<(std::ostream& os, const Run& r)
-	{
-		os << r.participant << std::endl;
-		os << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
-		
-		for (auto& trial : r.trials)
-		{
-			os << std::tuple(trial, r.participant.id) << "\n";
-		} 
-
-		return os;
-	}
-
-	void Run::Export(const std::filesystem::path& path) const
+	void Run::Export(const std::filesystem::path& path, int currentSessionIndex) const
 	{
 		std::ofstream file(path.generic_string());
 
-		file << *this << "\n";
+		file << participant << std::endl;
+		file << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
+
+		for (int i = currentSessionIndex; i < currentSessionIndex + SessionsPerTrial(); i++)
+		{
+			if (trials[i].participantResponse == Option::None) continue;
+			file << std::tuple(trials[i], participant.id) << "\n";
+		}
+
 		file.close();
 	}
 

@@ -135,6 +135,22 @@ namespace string
 	{
 		return std::stoi(std::string(s));
 	}
+
+	template<typename T>
+	static std::vector<T> split(const std::string& str, char delim)
+	{
+		std::vector<T> vect;
+
+		std::stringstream ss(str);
+
+		for (int i; ss >> i;) {
+			vect.push_back(i);
+			if (ss.peek() == ',')
+				ss.ignore();
+		}
+
+		return vect;
+	}
 }
 
 namespace Debug

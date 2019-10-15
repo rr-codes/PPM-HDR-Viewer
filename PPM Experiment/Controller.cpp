@@ -102,20 +102,16 @@ namespace Experiment {
 			m_failureSound->Play();
 		}
 
-		if ((1 + m_currentImageIndex) % m_run.SessionsPerTrial() == 0)
-		{
+		if (1 + m_currentImageIndex >= m_run.trials.size()) {
 			const auto s = Utils::FormatTime("%H-%M", std::chrono::system_clock::now());
 			const auto filename = "Group" + std::to_string(m_run.participant.groupNumber)
-				+ "_Session" + std::to_string(m_currentSession + m_run.minMax.first);
+				+ "_Session" + std::to_string(m_run.session)
 				+ "_Id" + m_run.participant.id + "_" + s + ".csv";
 
-			m_run.Export(DESTINATION_PATH + filename, m_currentSession); 
+			m_run.Export(DESTINATION_PATH + filename);
 
-			m_currentSession++;
 			m_startButtonHasBeenPressed = false;
-		}
 
-		if (1 + m_currentImageIndex >= m_run.trials.size()) {
 			ExitGame();
 			exit(0);
 		}

@@ -121,14 +121,14 @@ namespace Experiment
 		return os;
 	}
 
-	void Run::Export(const std::filesystem::path& path, int currentSessionIndex) const
+	void Run::Export(const std::filesystem::path& path) const
 	{
 		std::ofstream file(path.generic_string());
 
 		file << participant << std::endl;
 		file << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 
-		for (int i = currentSessionIndex; i < currentSessionIndex + SessionsPerTrial(); i++)
+		for (int i = 0; i < trials.size(); i++)
 		{
 			if (trials[i].participantResponse == Option::None) continue;
 			file << std::tuple(trials[i], participant.id) << "\n";
@@ -156,15 +156,10 @@ namespace Experiment
 		auto csv = CSV::Reader<std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
-		//2-5
-		std::string sessions;
 
-		file >> run.participant.groupNumber >> sessions
+		file >> run.participant.groupNumber >> run.session
 			>> run.participant.id >> run.participant.age >> run.participant.gender
 			>> run.originalImageDirectory;
-
-		auto vec = string::split<int>(sessions, '-');
-		run.minMax = std::make_pair(vec[0], vec[1]);
 
 		for (auto [directory, name, option, x, y, mode] : csv)
 		{			

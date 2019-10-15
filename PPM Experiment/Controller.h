@@ -66,9 +66,6 @@ namespace Experiment
 		std::unique_ptr<Utils::Timer<>> m_flickerTimer;
 
 		std::unique_ptr<Utils::Stopwatch<>> m_stopwatch;
-
-		int m_currentSession = 0;
-
 	};
 
 }

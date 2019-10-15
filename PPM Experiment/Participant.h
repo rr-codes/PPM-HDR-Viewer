@@ -79,18 +79,18 @@ namespace Experiment {
 
 	struct Run
 	{
-		std::pair<int, int> minMax = std::pair(0, 0);
+		int session = 0;
 		std::string originalImageDirectory = "";
 
 		Participant participant = {};
 		std::vector<Trial> trials = {};
 
 		static Run CreateRun(const std::filesystem::path& configPath);
-		void Export(const std::filesystem::path& path, int currentSessionIndex) const;
+		void Export(const std::filesystem::path& path) const;
 
-		[[nodiscard]] int SessionsPerTrial() const
+		[[nodiscard]] int size() const
 		{
-			return trials.size() / (minMax.second - minMax.first + 1);
+			return trials.size();
 		}
 	};
 	

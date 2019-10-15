@@ -156,9 +156,15 @@ namespace Experiment
 		auto csv = CSV::Reader<std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
-		file >> run.participant.groupNumber >> run.numberOfSessions
+		//2-5
+		std::string sessions;
+
+		file >> run.participant.groupNumber >> sessions
 			>> run.participant.id >> run.participant.age >> run.participant.gender
 			>> run.originalImageDirectory;
+
+		auto vec = string::split<int>(sessions, '-');
+		run.minMax = std::make_pair(vec[0], vec[1]);
 
 		for (auto [directory, name, option, x, y, mode] : csv)
 		{			

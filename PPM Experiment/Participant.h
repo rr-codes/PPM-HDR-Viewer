@@ -79,7 +79,7 @@ namespace Experiment {
 
 	struct Run
 	{
-		int numberOfSessions = 0;
+		std::pair<int, int> minMax = std::pair(0, 0);
 		std::string originalImageDirectory = "";
 
 		Participant participant = {};
@@ -90,7 +90,7 @@ namespace Experiment {
 
 		[[nodiscard]] int SessionsPerTrial() const
 		{
-			return trials.size() / numberOfSessions;
+			return trials.size() / (minMax.second - minMax.first + 1);
 		}
 	};
 	

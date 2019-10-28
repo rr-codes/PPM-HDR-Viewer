@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HDRViewer19", "HDRViewer19\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PPM Experiment", "PPM Experiment\PPM Experiment.vcxproj", "{E06A36E4-DCB4-400F-B45D-D6B87EA89E77}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tester", "Tester\Tester.vcxproj", "{33249041-0126-4E39-A200-31AB336D196C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{E06A36E4-DCB4-400F-B45D-D6B87EA89E77}.Release|x64.Build.0 = Release|x64
 		{E06A36E4-DCB4-400F-B45D-D6B87EA89E77}.Release|x86.ActiveCfg = Release|Win32
 		{E06A36E4-DCB4-400F-B45D-D6B87EA89E77}.Release|x86.Build.0 = Release|Win32
+		{33249041-0126-4E39-A200-31AB336D196C}.Debug|x64.ActiveCfg = Debug|x64
+		{33249041-0126-4E39-A200-31AB336D196C}.Debug|x64.Build.0 = Debug|x64
+		{33249041-0126-4E39-A200-31AB336D196C}.Debug|x86.ActiveCfg = Debug|Win32
+		{33249041-0126-4E39-A200-31AB336D196C}.Debug|x86.Build.0 = Debug|Win32
+		{33249041-0126-4E39-A200-31AB336D196C}.Release|x64.ActiveCfg = Release|x64
+		{33249041-0126-4E39-A200-31AB336D196C}.Release|x64.Build.0 = Release|x64
+		{33249041-0126-4E39-A200-31AB336D196C}.Release|x86.ActiveCfg = Release|Win32
+		{33249041-0126-4E39-A200-31AB336D196C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -28,7 +28,7 @@ namespace Experiment
 	public:
 		Controller(Run& run, DX::DeviceResources* deviceResources);
 
-		[[nodiscard]] std::pair<DuoView, DuoView> SetFlickerStereoViews(const std::array<std::string, 4>& files) const;
+		[[nodiscard]] DuoView SetFlickerStereoViews(const std::array<std::string, 4>& files) const;
 
 		[[nodiscard]] SingleView SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const;
 

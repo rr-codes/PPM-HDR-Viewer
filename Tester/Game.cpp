@@ -80,7 +80,7 @@ namespace Experiment
 	void Game::Update()
 	{
 		// under all other circumstances render the appropriate pair of DuoViews
-		Render(m_shouldFlicker ? m_stereoViews.first : m_stereoViews.second);
+		Render(m_shouldFlicker ? m_stereoViews.left : m_stereoViews.right);
 		m_shouldFlicker = !m_shouldFlicker;
 	}
 #pragma endregion

@@ -74,7 +74,7 @@ namespace Experiment {
 
 		Controller* m_controller;
 
-		std::pair<DuoView, DuoView> m_stereoViews;
+		DuoView m_stereoViews;
 	};
 
 }

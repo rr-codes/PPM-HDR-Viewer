@@ -114,40 +114,13 @@ namespace Experiment {
 		};
 	}
 
-	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
+	DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
 	{
 
-		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
-		const auto dims = DirectX::SimpleMath::Vector2{3840 * 2, 2160};
-
-		views.reserve(files.size());
-		for (auto& file : files)
-		{
-			views.push_back(ToResource(file, Vector{0, 0}));
-		}
-
-		auto halfDist = static_cast<float>(Configuration::ImageDistance) / 2;
-		auto yPos = dims.y / 2 - static_cast<float>(Configuration::ImageDimensions.y) / 2;
-
-		using Vec = DirectX::SimpleMath::Vector2;
-
-		auto ll = Vec(dims.x / 4 - halfDist - Configuration::ImageDimensions.x, yPos);
-		auto lr = Vec(dims.x / 4 + halfDist, yPos);
-		auto rl = Vec(dims.x * 3 / 4 - halfDist - Configuration::ImageDimensions.x, yPos);
-		auto rr = Vec(dims.x * 3 / 4 + halfDist, yPos);
-
-		DuoView no_flicker = {
-			{Image{views[1], ll}, Image{views[1], lr} },
-			{Image{views[3], rl}, Image{views[3], rr} }
+		return DuoView{
+			SetStaticStereoView({files[0], files[1]}),
+			SetStaticStereoView({files[2], files[3]}),
 		};
-
-		DuoView flicker = no_flicker;
-		auto i = 0;
-
-		flicker.left[i].image = views[0];
-		flicker.right[i].image = views[2];
-
-		return std::make_pair(no_flicker, flicker);
 	}
 
 }

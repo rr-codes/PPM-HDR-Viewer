@@ -27,6 +27,7 @@ namespace Experiment {
 		// Basic game loop
 		void Tick();
 		void OnEscapeKeyDown();
+		void OnArrowKeyDown(WPARAM key);
 
 		// IDeviceNotify
 		virtual void OnDeviceLost() override;
@@ -74,7 +75,7 @@ namespace Experiment {
 
 		Controller* m_controller;
 
-		DuoView m_stereoViews;
+		SingleView m_stereoViews;
 	};
 
 }

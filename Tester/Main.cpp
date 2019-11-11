@@ -13,6 +13,7 @@
 #include <fstream>
 #include <string>
 #include <filesystem>
+#include <shlobj.h>
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")
@@ -33,6 +34,51 @@ extern "C"
 	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
+static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+{
+	if (uMsg == BFFM_INITIALIZED)
+	{
+		LPCTSTR path = reinterpret_cast<LPCTSTR>(lpData);
+		::SendMessage(hwnd, BFFM_SETSELECTION, true, (LPARAM)path);
+	}
+
+	return 0;
+}
+
+std::wstring BrowseFolder(std::string saved_path)
+{
+	TCHAR path[MAX_PATH];
+
+	std::wstring wsaved_path(saved_path.begin(), saved_path.end());
+	const wchar_t* path_param = wsaved_path.c_str();
+
+	BROWSEINFO bi = { 0 };
+	bi.lpszTitle = (L"Browse for folder...");
+	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+	bi.lpfn = BrowseCallbackProc;
+	bi.lParam = (LPARAM)path_param;
+
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+
+	if (pidl != 0)
+	{
+		//get the name of the folder and put it in path
+		SHGetPathFromIDList(pidl, path);
+
+		//free memory used
+		IMalloc* imalloc = 0;
+		if (SUCCEEDED(SHGetMalloc(&imalloc)))
+		{
+			imalloc->Free(pidl);
+			imalloc->Release();
+		}
+
+		return path;
+	}
+
+	return L"";
+}
+
 // Entry point
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
 {
@@ -51,7 +97,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
-	auto run = Experiment::Run::CreateRun(lpCmdLine);
+
+	const auto folder = BrowseFolder("C:\\");
+
+	auto run = Experiment::Run::CreateRun(folder);
 
 	g_game = std::make_unique<Experiment::Game>(run);
 
@@ -172,12 +221,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_KEYDOWN:
+		if (game && (wParam == VK_LEFT || wParam == VK_RIGHT))
+		{
+			game->OnArrowKeyDown(wParam);
+		}
 		if (game && wParam == VK_ESCAPE)
 		{
 			game->OnEscapeKeyDown();
-		}
-		if (game)
-		{
 		}
 		break;
 

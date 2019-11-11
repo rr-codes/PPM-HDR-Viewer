@@ -52,7 +52,7 @@ namespace Experiment
 
 		m_deviceResources->GoFullscreen();
 
-		m_stereoViews = m_controller->SetFlickerStereoViews(m_controller->GetRun()->paths);
+		m_stereoViews = m_controller->GetCurrentImage();
 
 		m_controller->GetFlickerTimer()->Start();
 	}
@@ -76,45 +76,31 @@ namespace Experiment
 		exit(0);
 	}
 
+	void Game::OnArrowKeyDown(WPARAM key)
+	{
+		if (key == VK_LEFT)
+		{
+			m_controller->m_currentImageIndex = (m_controller->m_currentImageIndex == 0)
+				? m_controller->numberOfImages() - 1
+				: m_controller->m_currentImageIndex - 1;
+		}
+		else if (key == VK_RIGHT)
+		{
+			m_controller->m_currentImageIndex = (m_controller->m_currentImageIndex + 1) % m_controller->numberOfImages();
+		}
+
+		m_stereoViews = m_controller->GetCurrentImage();
+	}
+
 	// Updates the world.
 	void Game::Update()
 	{
 		// under all other circumstances render the appropriate pair of DuoViews
-		Render(m_shouldFlicker ? m_stereoViews.left : m_stereoViews.right);
-		m_shouldFlicker = !m_shouldFlicker;
+		Render(m_stereoViews);
 	}
 #pragma endregion
 
-	void Game::Render(const DuoView& duo_view)
-	{
-		RenderBase([&](int i)
-		{
-			for (size_t j = 0; j < 2; j++)
-			{
-				m_spriteBatch->Draw(
-					duo_view[i][j].image.Get(),
-					duo_view[i][j].position,
-					nullptr,
-					DirectX::Colors::White,
-					0,
-					DirectX::g_XMZero,
-					1.0,
-					DirectX::SpriteEffects_FlipHorizontally
-				);
-			}
-		});
-	}
-
 	void Game::Render(const SingleView& single_view)
-	{
-		RenderBase([&](int i)
-		{
-			m_spriteBatch->Draw(single_view[i].image.Get(), single_view[i].position);
-		});
-	}
-
-	template<typename F>
-	void Game::RenderBase(F&& drawFunction)
 	{
 		
 		auto context = m_deviceResources->GetD3DDeviceContext();
@@ -127,7 +113,7 @@ namespace Experiment
 
 		for (size_t i = 0; i < 2; ++i)
 		{
-			drawFunction(i);
+			m_spriteBatch->Draw(single_view[i].image.Get(), single_view[i].position);
 		}
 
 		m_spriteBatch->End();

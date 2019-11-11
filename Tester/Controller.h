@@ -31,13 +31,18 @@ namespace Experiment
 		[[nodiscard]] DuoView SetFlickerStereoViews(const std::array<std::string, 4>& files) const;
 
 		[[nodiscard]] SingleView SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const;
+		SingleView PathToSingleView(const std::filesystem::path& path) const;
 
 		[[nodiscard]] Utils::Timer<>* GetFlickerTimer() const { return m_flickerTimer.get(); }
 
-		Run* GetRun()
+		SingleView GetCurrentImage()
 		{
-			return &m_run;
+			return PathToSingleView(m_run.files[m_currentImageIndex]);
 		}
+
+		int numberOfImages() const { return m_run.files.size(); }
+
+		int m_currentImageIndex = 0;
 
 	private:
 		

@@ -8,7 +8,7 @@ namespace Experiment {
 
 	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
 	{		
-		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(Configuration::FlickerRate * 1000.0);
+		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(1000.0 / 60.0);
 	}
 
 	static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
@@ -111,6 +111,15 @@ namespace Experiment {
 		return {
 			Image{ l, {0, 0} },
 			Image{ r, {3840, 0} }
+		};
+	}
+
+	SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
+	{
+		const auto img = ToResource(path);
+		return {
+			Image{img, {0, 0}},
+			Image{img, {3840, 0}}
 		};
 	}
 

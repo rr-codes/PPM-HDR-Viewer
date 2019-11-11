@@ -19,9 +19,9 @@ namespace Experiment {
 
 	struct Run
 	{
-		std::array<std::string, 4> paths;
+		std::vector<std::filesystem::path> files = {};
 
-		static Run CreateRun(const std::filesystem::path& configPath);
+		static Run CreateRun(const std::filesystem::path& folder);
 	};
 	
 	namespace Configuration

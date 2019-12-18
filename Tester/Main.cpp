@@ -45,15 +45,14 @@ static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	return 0;
 }
 
-std::wstring BrowseFolder(std::string saved_path)
+std::wstring BrowseFolder(std::wstring saved_path, std::wstring title = L"Browse for Folder")
 {
 	TCHAR path[MAX_PATH];
 
-	std::wstring wsaved_path(saved_path.begin(), saved_path.end());
-	const wchar_t* path_param = wsaved_path.c_str();
+	const wchar_t* path_param = saved_path.c_str();
 
 	BROWSEINFO bi = { 0 };
-	bi.lpszTitle = (L"Browse for folder...");
+	bi.lpszTitle = title.c_str();
 	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 	bi.lpfn = BrowseCallbackProc;
 	bi.lParam = (LPARAM)path_param;
@@ -98,9 +97,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	g_game->GetDefaultSize(w, h);
 
 
-	const auto folder = BrowseFolder("C:\\");
+	const auto originalsFolder = BrowseFolder(L"C:\\", L"Select Original Folder");
+	const auto compressedFolder = BrowseFolder(originalsFolder, L"Browse for Compressed Folder");
 
-	auto run = Experiment::Run::CreateRun(folder);
+	auto run = Experiment::Run::CreateRun(originalsFolder, compressedFolder);
 
 	g_game = std::make_unique<Experiment::Game>(run);
 

@@ -100,6 +100,9 @@ namespace Experiment
 	}
 #pragma endregion
 
+	bool flickerToggle = true;
+
+	/// Used to render flickering images on a single display
 	void Game::Render(const SingleView& single_view)
 	{
 		
@@ -111,10 +114,8 @@ namespace Experiment
 
 		m_spriteBatch->Begin();
 
-		for (size_t i = 0; i < 2; ++i)
-		{
-			m_spriteBatch->Draw(single_view[i].image.Get(), single_view[i].position);
-		}
+		m_spriteBatch->Draw((flickerToggle ? single_view.left : single_view.right).image.Get(), single_view.left.position);
+		flickerToggle = !flickerToggle;
 
 		m_spriteBatch->End();
 

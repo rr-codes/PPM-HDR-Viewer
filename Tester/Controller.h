@@ -28,16 +28,13 @@ namespace Experiment
 	public:
 		Controller(Run& run, DX::DeviceResources* deviceResources);
 
-		[[nodiscard]] DuoView SetFlickerStereoViews(const std::array<std::string, 4>& files) const;
-
 		[[nodiscard]] SingleView SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const;
-		SingleView PathToSingleView(const std::filesystem::path& path) const;
 
 		[[nodiscard]] Utils::Timer<>* GetFlickerTimer() const { return m_flickerTimer.get(); }
 
 		SingleView GetCurrentImage()
 		{
-			return PathToSingleView(m_run.files[m_currentImageIndex]);
+			return SetFlickerSingleView(m_run.files[m_currentImageIndex]);
 		}
 
 		int numberOfImages() const { return m_run.files.size(); }
@@ -50,6 +47,7 @@ namespace Experiment
 		[[nodiscard]] Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResource(const std::filesystem::path& image, Vector region) const;
 		template <class F>
 		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResourceBase(const std::filesystem::path& image,  F&& matTransformFunction) const;
+		SingleView SetFlickerSingleView(const Utils::Duo<std::filesystem::path>& views) const;
 
 		DX::DeviceResources* m_deviceResources;
 		Experiment::Run m_run;

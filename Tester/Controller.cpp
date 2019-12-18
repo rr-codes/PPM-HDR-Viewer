@@ -99,37 +99,49 @@ namespace Experiment {
 
 		return shader;
 	}
-	
 
-	SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
+	SingleView Controller::SetFlickerSingleView(const Utils::Duo<std::filesystem::path>& views) const
 	{
-		const auto l = ToResource(views.left);
-		const auto r = ToResource(views.right);
+		const auto l = ToResource(views.left), r = ToResource(views.right);
 
 		const auto dims = m_deviceResources->GetDimensions();
 
 		return {
-			Image{ l, {0, 0} },
-			Image{ r, {3840, 0} }
+			Image{l, {0, 0}},
+			Image{r, {3840, 0}}
 		};
 	}
-
-	SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
-	{
-		const auto img = ToResource(path);
-		return {
-			Image{img, {0, 0}},
-			Image{img, {3840, 0}}
-		};
-	}
-
-	DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
-	{
-
-		return DuoView{
-			SetStaticStereoView({files[0], files[1]}),
-			SetStaticStereoView({files[2], files[3]}),
-		};
-	}
+	
+	//
+	// SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
+	// {
+	// 	const auto l = ToResource(views.left);
+	// 	const auto r = ToResource(views.right);
+	//
+	// 	const auto dims = m_deviceResources->GetDimensions();
+	//
+	// 	return {
+	// 		Image{ l, {0, 0} },
+	// 		Image{ r, {3840, 0} }
+	// 	};
+	// }
+	//
+	// SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
+	// {
+	// 	const auto img = ToResource(path);
+	// 	return {
+	// 		Image{img, {0, 0}},
+	// 		Image{img, {3840, 0}}
+	// 	};
+	// }
+	//
+	// DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
+	// {
+	//
+	// 	return DuoView{
+	// 		SetStaticStereoView({files[0], files[1]}),
+	// 		SetStaticStereoView({files[2], files[3]}),
+	// 	};
+	// }
 
 }

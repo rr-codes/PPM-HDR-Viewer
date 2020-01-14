@@ -81,10 +81,55 @@ namespace Utils
 	}
 
 	/// A pair of one type of element representing data associated with sidedness
+	// template <typename T>
+	// struct Duo
+	// {
+	// 	T left, right;
+	//
+	// 	T& operator[](int i)
+	// 	{
+	// 		if (i == 0) return left;
+	// 		if (i == 1) return right;
+	//
+	// 		throw std::out_of_range("");
+	// 	}
+	//
+	// 	const T& operator[](int i) const
+	// 	{
+	// 		if (i == 0) return left;
+	// 		if (i == 1) return right;
+	//
+	// 		throw std::out_of_range("");
+	// 	}
+	// };
+
+
 	template <typename T>
-	struct Duo
+	struct Stereo
 	{
 		T left, right;
+
+		T& operator[](int i)
+		{
+			if (i == 0) return left;
+			if (i == 1) return right;
+
+			throw std::out_of_range("");
+		}
+
+		const T& operator[](int i) const
+		{
+			if (i == 0) return left;
+			if (i == 1) return right;
+
+			throw std::out_of_range("");
+		}
+	};
+
+	template <typename T>
+	struct Artifact
+	{
+		T original, compressed;
 
 		T& operator[](int i)
 		{

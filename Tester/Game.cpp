@@ -23,7 +23,7 @@ namespace Experiment
 			2,
 			D3D_FEATURE_LEVEL_10_0,
 			DX::DeviceResources::c_EnableHDR
-		);
+			);
 
 		m_deviceResources->RegisterDeviceNotify(this);
 		m_controller = new Controller(run, m_deviceResources.get());
@@ -61,7 +61,7 @@ namespace Experiment
 	// Executes the basic game loop.
 	void Game::Tick()
 	{
-		m_controller->GetFlickerTimer()->Tick([=](){Update();});
+		m_controller->GetFlickerTimer()->Tick([=]() {Update(); });
 	}
 
 	void Game::OnEscapeKeyDown()
@@ -100,9 +100,12 @@ namespace Experiment
 	}
 #pragma endregion
 
+	bool flickerToggle = true;
+
+	/// Used to render flickering images on a single display
 	void Game::Render(const SingleView& single_view)
 	{
-		
+
 		auto context = m_deviceResources->GetD3DDeviceContext();
 
 		Clear();
@@ -111,10 +114,19 @@ namespace Experiment
 
 		m_spriteBatch->Begin();
 
-		for (size_t i = 0; i < 2; ++i)
-		{
-			m_spriteBatch->Draw(single_view[i].image.Get(), single_view[i].position);
-		}
+		m_spriteBatch->Draw(
+			(flickerToggle ? single_view.left : single_view.right).image.Get(),
+			single_view.left.position,
+			nullptr,
+			DirectX::Colors::White,
+			0,
+			DirectX::g_XMZero,
+			1.0,
+			DirectX::SpriteEffects_FlipHorizontally
+		);
+
+
+		flickerToggle = !flickerToggle;
 
 		m_spriteBatch->End();
 

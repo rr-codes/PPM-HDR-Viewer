@@ -45,15 +45,14 @@ static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	return 0;
 }
 
-std::wstring BrowseFolder(std::string saved_path)
+std::wstring BrowseFolder(std::wstring saved_path, std::wstring title = L"Browse for Folder")
 {
 	TCHAR path[MAX_PATH];
 
-	std::wstring wsaved_path(saved_path.begin(), saved_path.end());
-	const wchar_t* path_param = wsaved_path.c_str();
+	const wchar_t* path_param = saved_path.c_str();
 
 	BROWSEINFO bi = { 0 };
-	bi.lpszTitle = (L"Browse for folder...");
+	bi.lpszTitle = title.c_str();
 	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 	bi.lpfn = BrowseCallbackProc;
 	bi.lParam = (LPARAM)path_param;
@@ -97,10 +96,16 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	int w, h;
 	g_game->GetDefaultSize(w, h);
 
+	auto tryInitialDirectory = L"E:\\Mohona_PhD\\Qualcom\\Qualcomm_VESA_HDR 3D testing_2019\\VESA 3D HDR CA testing February 2020\\Images_CA\\";
+	if (!std::filesystem::is_directory(tryInitialDirectory)) {
+		tryInitialDirectory = L"C:\\";
+	}
 
-	const auto folder = BrowseFolder("C:\\");
 
-	auto run = Experiment::Run::CreateRun(folder);
+	const auto originalsFolder = BrowseFolder(tryInitialDirectory, L"Select Original Folder");
+	const auto compressedFolder = BrowseFolder(originalsFolder, L"Browse for Compressed Folder");
+
+	auto run = Experiment::Run::CreateRun(originalsFolder, compressedFolder);
 
 	g_game = std::make_unique<Experiment::Game>(run);
 
@@ -137,19 +142,19 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	window = CreateWindowExW(
-		WS_EX_TOPMOST, 
+		WS_EX_TOPMOST,
 		name,
-		name, 
+		name,
 		WS_POPUP,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		(rc.right - rc.left) * 2, 
-		rc.bottom - rc.top, 
-		nullptr, 
-		nullptr, 
+		(rc.right - rc.left) * 2,
+		rc.bottom - rc.top,
+		nullptr,
+		nullptr,
 		hInstance,
 		nullptr
 	);
-	
+
 	// TODO: Change to CreateWindowExW(WS_EX_TOPMOST, L"$safeprojectname$WindowClass", L"$projectname$", WS_POPUP,
 	// to default to fullscreen.
 

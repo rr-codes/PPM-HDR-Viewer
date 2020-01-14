@@ -7,8 +7,8 @@ extern void ExitGame();
 namespace Experiment {
 
 	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
-	{		
-		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(1000.0 / 60.0);
+	{
+		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(100.0);
 	}
 
 	static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
@@ -27,17 +27,17 @@ namespace Experiment {
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image) const
 	{
 		return ToResourceBase(image, [](auto m)
-		{
-			return m;
-		});
+			{
+				return m;
+			});
 	}
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image, Vector region) const
 	{
 		return ToResourceBase(image, [&](auto m)
-		{
-			return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
-		});
+			{
+				return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
+			});
 	}
 
 
@@ -99,37 +99,54 @@ namespace Experiment {
 
 		return shader;
 	}
-	
 
-	SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
+	FlickerStereoImage Controller::GetFlickerStereoImageFrom(const Utils::Stereo<Utils::Artifact<std::filesystem::path>>& views) const
 	{
-		const auto l = ToResource(views.left);
-		const auto r = ToResource(views.right);
+		const auto lOrig = ToResource(views.left.original),
+			rOrig = ToResource(views.right.original),
+			lDec = ToResource(views.left.compressed),
+			rDec = ToResource(views.right.compressed);
 
 		const auto dims = m_deviceResources->GetDimensions();
 
 		return {
-			Image{ l, {0, 0} },
-			Image{ r, {3840, 0} }
+		Image{lOrig, {0, 0}},
+		Image{lDec, {0, 0}},
+					Image{rOrig, {3840, 0}},
+		Image{lDec, {3840, 0}},
 		};
 	}
 
-	SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
-	{
-		const auto img = ToResource(path);
-		return {
-			Image{img, {0, 0}},
-			Image{img, {3840, 0}}
-		};
-	}
-
-	DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
-	{
-
-		return DuoView{
-			SetStaticStereoView({files[0], files[1]}),
-			SetStaticStereoView({files[2], files[3]}),
-		};
-	}
+	//
+	// SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
+	// {
+	// 	const auto l = ToResource(views.left);
+	// 	const auto r = ToResource(views.right);
+	//
+	// 	const auto dims = m_deviceResources->GetDimensions();
+	//
+	// 	return {
+	// 		Image{ l, {0, 0} },
+	// 		Image{ r, {3840, 0} }
+	// 	};
+	// }
+	//
+	// SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
+	// {
+	// 	const auto img = ToResource(path);
+	// 	return {
+	// 		Image{img, {0, 0}},
+	// 		Image{img, {3840, 0}}
+	// 	};
+	// }
+	//
+	// DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
+	// {
+	//
+	// 	return DuoView{
+	// 		SetStaticStereoView({files[0], files[1]}),
+	// 		SetStaticStereoView({files[2], files[3]}),
+	// 	};
+	// }
 
 }

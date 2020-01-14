@@ -19,11 +19,12 @@ namespace Experiment {
 
 	struct Run
 	{
-		std::vector<std::filesystem::path> files = {};
+		/// A collection of stereoscopic image files
+		std::vector<Utils::Stereo<Utils::Artifact<std::filesystem::path>>> files = {};
 
-		static Run CreateRun(const std::filesystem::path& folder);
+		static Run CreateRun(const std::filesystem::path& originalsFolder, const std::filesystem::path& compressedFolder);
 	};
-	
+
 	namespace Configuration
 	{
 		using namespace std::chrono;

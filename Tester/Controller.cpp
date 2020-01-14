@@ -110,10 +110,14 @@ namespace Experiment {
 		const auto dims = m_deviceResources->GetDimensions();
 
 		return {
-		Image{lOrig, {0, 0}},
-		Image{lDec, {0, 0}},
-					Image{rOrig, {3840, 0}},
-		Image{lDec, {3840, 0}},
+			{
+				Image{lOrig, {0, 0}},
+				Image{lDec, {0, 0}}
+			},
+			{
+				Image{rOrig, {3840, 0}},
+				Image{lDec, {3840, 0}}
+			},
 		};
 	}
 

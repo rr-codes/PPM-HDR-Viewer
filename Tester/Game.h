@@ -51,10 +51,9 @@ namespace Experiment {
 		void Update();
 
 		/// This renders two seperate stereo images displayed concurrently given a DuoView
-		void Render(const DuoView& duo_view);
+		void Render(const FlickerStereoImage& view);
 
 		/// This renders a single fullscreen stereo image from a Duo of ShaderViews
-		void Render(const SingleView& single_view);
 
 		template<typename F>
 		void RenderBase(F&& drawFunction);
@@ -75,7 +74,7 @@ namespace Experiment {
 
 		Controller* m_controller;
 
-		SingleView m_stereoViews;
+		FlickerStereoImage m_stereoViews;
 	};
 
 }

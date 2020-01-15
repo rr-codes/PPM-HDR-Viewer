@@ -103,7 +103,7 @@ namespace Experiment
 	bool flickerToggle = true;
 
 	/// Used to render flickering images on a single display
-	void Game::Render(const SingleView& single_view)
+	void Game::Render(const FlickerStereoImage& view)
 	{
 
 		auto context = m_deviceResources->GetD3DDeviceContext();
@@ -115,8 +115,19 @@ namespace Experiment
 		m_spriteBatch->Begin();
 
 		m_spriteBatch->Draw(
-			(flickerToggle ? single_view.left : single_view.right).image.Get(),
-			single_view.left.position,
+			(flickerToggle ? view.left.original: view.left.compressed).image.Get(),
+			view.left.original.position,
+			nullptr,
+			DirectX::Colors::White,
+			0,
+			DirectX::g_XMZero,
+			1.0,
+			DirectX::SpriteEffects_FlipHorizontally
+		);
+
+		m_spriteBatch->Draw(
+			(flickerToggle ? view.right.original : view.right.compressed).image.Get(),
+			view.right.original.position,
 			nullptr,
 			DirectX::Colors::White,
 			0,

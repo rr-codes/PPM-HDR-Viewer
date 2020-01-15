@@ -80,30 +80,6 @@ namespace Utils
 		}
 	}
 
-	/// A pair of one type of element representing data associated with sidedness
-	// template <typename T>
-	// struct Duo
-	// {
-	// 	T left, right;
-	//
-	// 	T& operator[](int i)
-	// 	{
-	// 		if (i == 0) return left;
-	// 		if (i == 1) return right;
-	//
-	// 		throw std::out_of_range("");
-	// 	}
-	//
-	// 	const T& operator[](int i) const
-	// 	{
-	// 		if (i == 0) return left;
-	// 		if (i == 1) return right;
-	//
-	// 		throw std::out_of_range("");
-	// 	}
-	// };
-
-
 	template <typename T>
 	struct Stereo
 	{
@@ -133,16 +109,16 @@ namespace Utils
 
 		T& operator[](int i)
 		{
-			if (i == 0) return left;
-			if (i == 1) return right;
+			if (i == 0) return original;
+			if (i == 1) return compressed;
 
 			throw std::out_of_range("");
 		}
 
 		const T& operator[](int i) const
 		{
-			if (i == 0) return left;
-			if (i == 1) return right;
+			if (i == 0) return original;
+			if (i == 1) return compressed;
 
 			throw std::out_of_range("");
 		}

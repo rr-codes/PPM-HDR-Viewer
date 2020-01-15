@@ -11,7 +11,6 @@ constexpr auto FAILURE = L"Success3.wav";
 
 namespace Experiment
 {
-	struct Vector;
 
 	struct Image
 	{
@@ -31,7 +30,7 @@ namespace Experiment
 
 		FlickerStereoImage GetCurrentImage()
 		{
-			return SetFlickerSingleView(m_run.files[m_currentImageIndex]);
+			return GetFlickerStereoImageFrom(m_run.files[m_currentImageIndex]);
 		}
 
 		int numberOfImages() const { return m_run.files.size(); }

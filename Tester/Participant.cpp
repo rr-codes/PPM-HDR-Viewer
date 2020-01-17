@@ -1,67 +1,140 @@
 #include "Participant.h"
 #include "Utils.h"
-#include <regex>
 
 namespace Experiment
 {
-	Run Run::CreateRun(const std::filesystem::path& originalFolder, const std::filesystem::path& compressedFolder)
-	{
-		// Run run = {};
-		//
-		// auto dia = std::filesystem::directory_iterator(originalFolder);
-		// auto dib = std::filesystem::directory_iterator(compressedFolder);
-		//
-		// for (auto ita = begin(dia), itb = begin(dib); ita != end(dia) && itb != end(dib); ++ita, ++itb)
-		// {
-		// 	auto path_a = ita->path();
-		// 	auto path_b = itb->path();
-		//
-		// 	run.files.push_back({ path_a, path_b });
-		// }
-		//
-		// if (run.files.empty())
-		// {
-		// 	Utils::FatalError("Empty Directory");
-		// }
-		//
+#pragma once
 
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include "DeviceResources.h"
+
+	namespace Experiment {
+
+		struct Vector
+		{
+			int x = 0, y = 0;
+		};
+
+		std::ostream& operator<<(std::ostream& os, const Vector& v);
+
+		struct Run
+		{
+			/// A collection of stereoscopic image files
+			std::vector<StereoFlickerArtefact<std::filesystem::path>> files = {};
+
+			static Run CreateRun(const std::filesystem::path& originalsFolder, const std::filesystem::path& compressedFolder, bool isStereo, bool isFlicker);
+		};
+
+		namespace Configuration
+		{
+			using namespace std::chrono;
+
+			constexpr auto FlickerRate = 0.1f;
+
+			constexpr auto ImageDistance = 60;
+			constexpr auto ImageDimensions = Vector{ 3840	, 2160 };
+		}
+
+	}
+
+	namespace fs = std::filesystem;
+
+	Run Run::CreateRun(const fs::path& originalFolder, const fs::path& compressedFolder, const bool isStereo, const bool isFlicker)
+	{
 		Run run = {};
 
-		// Preconditions:
-		// (a) Given n images, the originals and compressed folders each contain 2*n files;
-		// (b) In the originals / compressed folder, all files contain `orig` / `dec`, respectively, and there are an equal amount of `L` and `R` files in each folder
-		// (c) For each image A, there exists `A_L_orig.ppm` and `A_R_orig.ppm` in the originals directory, and the same but with `dec` in the compressed folder
-		for (auto& file : std::filesystem::directory_iterator(originalFolder))
+		auto directory_to_vector = [=](const fs::path& path)
 		{
-			if (file.path().extension() != ".ppm") continue;
-			if (file.path().string().find("_R_") != std::string::npos) continue; // arbitrarily, we only need to iterate through all `L` or `R` entries, so we choose `L` and skip all `R` entries
-			
-			// format: image_L_orig.ppm since we're in originals dir and skipping `R` entries
-			auto filename = file.path().filename().string(); 
+			std::vector<fs::path> files = {};
 
-			auto image = std::string(
-				filename.begin(),
-				std::find(filename.begin(), filename.end(), '_')
-			); // strips the suffix (_L_orig.ppm) to give the image name
-
-			// we have origL
-			const auto origR = originalFolder / (image + "_R_orig.ppm");
-			const auto decL = compressedFolder / (image + "_L_dec.ppm");
-			const auto decR = compressedFolder / (image + "_R_dec.ppm");
-
-			if (!exists(origR) || !exists(decL) || !exists(decR))
+			for (auto& file : fs::directory_iterator(path))
 			{
-				Utils::FatalError("Error while traversing folders: " + originalFolder.string() + ", " + compressedFolder.string() + " (file: " + file.path().string() + ")");
+				if (file.path().extension() != ".ppm") continue;
+				files.push_back(file);
 			}
 
-			run.files.push_back({
-				{filename, decL},
-				{origR, decR}
-				});
-		}
-		
+			std::sort(files.begin(), files.end());
+			return files;
+		};
 
-		return run;
+		auto originals = directory_to_vector(originalFolder);
+
+
+		if (!isFlicker && !isStereo)
+		{
+			for (auto& file : originals)
+			{
+				run.files.push_back({
+					file,
+					file,
+					file,
+					file
+					});
+			}
+
+			return run;
+		}
+
+		if (isFlicker && isStereo)
+		{
+			auto compressed = directory_to_vector(compressedFolder);
+
+			assert(originals.size() == compressed.size());
+			assert(originals.size() % 2 == 0);
+
+			for (size_t i = 0; i < originals.size() - 1; i += 2)
+			{
+				run.files.push_back({
+					originals[i],
+					originals[i + 1],
+					compressed[i],
+					compressed[i + 1]
+					});
+			}
+
+			return run;
+		}
+
+		if (isFlicker)
+		{
+			auto compressed = directory_to_vector(compressedFolder);
+
+			assert(originals.size() == compressed.size());
+
+			for (size_t i = 0; i < originals.size() - 1; i += 1)
+			{
+				run.files.push_back({
+					originals[i],
+					originals[i],
+					compressed[i],
+					compressed[i]
+					});
+			}
+
+			return run;
+		}
+
+		if (isStereo)
+		{
+			assert(originals.size() % 2 == 0);
+
+			for (size_t i = 0; i < originals.size() - 1; i += 2)
+			{
+				run.files.push_back({
+					originals[i],
+					originals[i + 1],
+					originals[i],
+					originals[i + 1]
+					});
+			}
+
+			return run;
+		}
+
+		exit(0);
 	}
 }
-

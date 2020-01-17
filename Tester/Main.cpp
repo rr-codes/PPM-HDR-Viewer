@@ -14,12 +14,11 @@
 #include <string>
 #include <filesystem>
 #include <shlobj.h>
+#include <windows.h>
 
 #pragma comment(lib, "Comdlg32.lib")
 #pragma comment(lib, "Comctl32.lib")
 
-
-using string_ref = const std::string &;
 
 std::unique_ptr<Experiment::Game> g_game;
 HWND window;
@@ -45,11 +44,13 @@ static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPAR
 	return 0;
 }
 
-std::wstring BrowseFolder(std::wstring saved_path, std::wstring title = L"Browse for Folder")
+std::wstring BrowseFolder(const std::wstring& saved_path, const std::wstring& title = L"Browse for Folder")
 {
 	TCHAR path[MAX_PATH];
+	TCHAR display[MAX_PATH];
 
 	const wchar_t* path_param = saved_path.c_str();
+
 
 	BROWSEINFO bi = { 0 };
 	bi.lpszTitle = title.c_str();
@@ -57,7 +58,7 @@ std::wstring BrowseFolder(std::wstring saved_path, std::wstring title = L"Browse
 	bi.lpfn = BrowseCallbackProc;
 	bi.lParam = (LPARAM)path_param;
 
-	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+	auto pidl = SHBrowseForFolder(&bi);
 
 	if (pidl != 0)
 	{
@@ -101,11 +102,14 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 		tryInitialDirectory = L"C:\\";
 	}
 
+	const auto stereo = MessageBox(nullptr, L"Do you want to view in stereo?", L"Enable Stereo", MB_YESNO | MB_ICONQUESTION) == IDYES;
+	const auto flicker = MessageBox(nullptr, L"Do you want images to flicker?", L"Enable Flicker", MB_YESNO | MB_ICONQUESTION) == IDYES;
+
 
 	const auto originalsFolder = BrowseFolder(tryInitialDirectory, L"Select Original Folder");
-	const auto compressedFolder = BrowseFolder(originalsFolder, L"Browse for Compressed Folder");
+	const auto compressedFolder = flicker ? BrowseFolder(originalsFolder, L"Browse for Compressed Folder") : L"";
 
-	auto run = Experiment::Run::CreateRun(originalsFolder, compressedFolder);
+	auto run = Experiment::Run::CreateRun(originalsFolder, compressedFolder, stereo, flicker);
 
 	g_game = std::make_unique<Experiment::Game>(run);
 
@@ -345,4 +349,3 @@ void ExitGame()
 {
 	PostQuitMessage(0);
 }
-

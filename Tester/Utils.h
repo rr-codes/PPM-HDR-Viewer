@@ -44,6 +44,18 @@ namespace std::filesystem
 	}
 }
 
+namespace Experiment
+{
+	template<typename T>
+	struct StereoFlickerArtefact
+	{
+		T leftOriginal, rightOriginal;
+		T leftCompressed, rightCompressed;
+	};
+}
+
+
+
 
 namespace Utils
 {

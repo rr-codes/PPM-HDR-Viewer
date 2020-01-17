@@ -5,20 +5,12 @@
 #include "Participant.h"
 #include "Utils.h"
 #include <filesystem>
-#include <SimpleMath.h>
 
 constexpr auto FAILURE = L"Success3.wav";
 
 namespace Experiment
 {
-
-	struct Image
-	{
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> image;
-		DirectX::SimpleMath::Vector2 position;
-	};
-
-	using FlickerStereoImage = Utils::Stereo<Utils::Artifact<Image>>;
+	using Image = Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>;
 
 
 	class Controller
@@ -28,7 +20,7 @@ namespace Experiment
 
 		[[nodiscard]] Utils::Timer<>* GetFlickerTimer() const { return m_flickerTimer.get(); }
 
-		FlickerStereoImage GetCurrentImage()
+		StereoFlickerArtefact<Image> GetCurrentImage()
 		{
 			return GetFlickerStereoImageFrom(m_run.files[m_currentImageIndex]);
 		}
@@ -40,12 +32,8 @@ namespace Experiment
 	private:
 
 		[[nodiscard]] Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResource(const std::filesystem::path& image) const;
-		[[nodiscard]] Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResource(const std::filesystem::path& image, Vector region) const;
-		template <class F>
-		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ToResourceBase(const std::filesystem::path& image, F&& matTransformFunction) const;
 
-		
-		FlickerStereoImage GetFlickerStereoImageFrom(const Utils::Stereo<Utils::Artifact<std::filesystem::path>>& views) const;
+		StereoFlickerArtefact<Image> GetFlickerStereoImageFrom(const StereoFlickerArtefact<std::filesystem::path>& views) const;
 
 		DX::DeviceResources* m_deviceResources;
 		Experiment::Run m_run;

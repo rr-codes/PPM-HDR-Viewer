@@ -11,38 +11,7 @@ namespace Experiment {
 		this->m_flickerTimer = std::make_unique<Utils::Timer<>>(100.0);
 	}
 
-	static cv::Mat CropMatrix(const cv::Mat& mat, const cv::Rect& cropRegion)
-	{
-		const cv::Mat croppedRef(mat, cropRegion);
-
-		cv::Mat cropped;
-		croppedRef.copyTo(cropped);
-
-		return cropped;
-	}
-
-	double timeAtPress = 0;
-
-
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image) const
-	{
-		return ToResourceBase(image, [](auto m)
-			{
-				return m;
-			});
-	}
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image, Vector region) const
-	{
-		return ToResourceBase(image, [&](auto m)
-			{
-				return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
-			});
-	}
-
-
-	template<typename F>
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResourceBase(const std::filesystem::path& image, F&& matTransformFunction) const
 	{
 		if (!is_regular_file(image))
 		{
@@ -59,7 +28,7 @@ namespace Experiment {
 		int conversion[] = { 2, 0, 1, 1, 0, 2, -1, 3 };
 		cv::mixChannels(&matrixoriginal, 1, &matrix, 1, conversion, 4);
 
-		auto cropped = matTransformFunction(matrix);
+		auto cropped = matrix;
 
 		D3D11_TEXTURE2D_DESC desc = {};
 		desc.Width = cropped.cols;
@@ -81,7 +50,7 @@ namespace Experiment {
 		try {
 			cv::directx::convertToD3D11Texture2D(cropped, texture.Get());
 		}
-		catch (cv::Exception& e)
+		catch (cv::Exception & e)
 		{
 			Utils::FatalError(e.err);
 		}
@@ -100,57 +69,19 @@ namespace Experiment {
 		return shader;
 	}
 
-	FlickerStereoImage Controller::GetFlickerStereoImageFrom(const Utils::Stereo<Utils::Artifact<std::filesystem::path>>& views) const
+	StereoFlickerArtefact<Image> Controller::GetFlickerStereoImageFrom(const StereoFlickerArtefact<std::filesystem::path>& views) const
 	{
-		const auto lOrig = ToResource(views.left.original),
-			rOrig = ToResource(views.right.original),
-			lDec = ToResource(views.left.compressed),
-			rDec = ToResource(views.right.compressed);
+		const auto f = [this](const std::filesystem::path& path) -> Image
+		{
+			return ToResource(path);
+		};
 
-		const auto dims = m_deviceResources->GetDimensions();
-
-		return {
-			{
-				Image{lOrig, {0, 0}},
-				Image{lDec, {0, 0}}
-			},
-			{
-				Image{rOrig, {3840, 0}},
-				Image{lDec, {3840, 0}}
-			},
+		return StereoFlickerArtefact<Image>{
+			f(views.leftOriginal),
+				f(views.rightOriginal),
+				f(views.leftCompressed),
+				f(views.rightCompressed)
 		};
 	}
-
-	//
-	// SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
-	// {
-	// 	const auto l = ToResource(views.left);
-	// 	const auto r = ToResource(views.right);
-	//
-	// 	const auto dims = m_deviceResources->GetDimensions();
-	//
-	// 	return {
-	// 		Image{ l, {0, 0} },
-	// 		Image{ r, {3840, 0} }
-	// 	};
-	// }
-	//
-	// SingleView Controller::PathToSingleView(const std::filesystem::path& path) const
-	// {
-	// 	const auto img = ToResource(path);
-	// 	return {
-	// 		Image{img, {0, 0}},
-	// 		Image{img, {3840, 0}}
-	// 	};
-	// }
-	//
-	// DuoView Controller::SetFlickerStereoViews(const std::array<std::string, 4>& files) const
-	// {
-	//
-	// 	return DuoView{
-	// 		SetStaticStereoView({files[0], files[1]}),
-	// 		SetStaticStereoView({files[2], files[3]}),
-	// 	};
-	// }
 
 }

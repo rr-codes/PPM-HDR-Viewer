@@ -20,9 +20,9 @@ namespace Experiment {
 	struct Run
 	{
 		/// A collection of stereoscopic image files
-		std::vector<Utils::Stereo<Utils::Artifact<std::filesystem::path>>> files = {};
+		std::vector<StereoFlickerArtefact<std::filesystem::path>> files = {};
 
-		static Run CreateRun(const std::filesystem::path& originalsFolder, const std::filesystem::path& compressedFolder);
+		static Run CreateRun(const std::filesystem::path& originalsFolder, const std::filesystem::path& compressedFolder, bool isStereo, bool isFlicker);
 	};
 
 	namespace Configuration

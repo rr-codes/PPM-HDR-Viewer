@@ -15,21 +15,21 @@ namespace Experiment {
 	};
 
 	std::istream& operator>>(std::istream& is, Option& o);
-	
+
 	enum class Mode
 	{
 		Stereo, Mono_Left, Mono_Right
 	};
 
 	std::istream& operator>>(std::istream& is, Mode& m);
-	
+
 	enum class Gender
 	{
 		None, Male, Female
 	};
 
 	std::istream& operator>>(std::istream& is, Gender& g);
-	
+
 	enum class Codec
 	{
 		Control, DSC, VDCM
@@ -50,19 +50,91 @@ namespace Experiment {
 
 	std::ostream& operator<<(std::ostream& os, const Vector& v);
 
+	struct Paths
+	{
+		std::filesystem::path leftOriginal, leftCompressed, rightOriginal, rightCompressed;
+	};
+
 	struct Trial
 	{
-		std::string directory = "";
+		std::string originalDirectory = "";
+		std::string decompressedDirectory = "";
 		std::string imageName = "";
 		Option correctOption = Option::None;
 
 		Vector position = {};
 		Mode mode = Mode::Stereo;
 
-		CompressionConfiguration compression = {Codec::Control, 0};
+		CompressionConfiguration compression = { Codec::Control, 0 };
 
 		Option participantResponse = Option::None;
 		double duration = 0.0;
+
+		[[nodiscard]] Paths imagePaths(const Mode mode) const
+		{
+			Paths paths = {};
+
+			if (mode == Mode::Stereo)
+			{
+				for (auto& file : std::filesystem::directory_iterator(originalDirectory))
+				{
+					auto path = file.path().string();
+					if (path.find(imageName) != std::string::npos)
+					{
+						if (path.find("_L") != std::string::npos) paths.leftOriginal = path;
+						else if (path.find("_R") != std::string::npos) paths.rightOriginal = path;
+						else Utils::FatalError("path=" + path);
+					}
+				}
+
+				for (auto& file : std::filesystem::directory_iterator(decompressedDirectory))
+				{
+					auto path = file.path().string();
+					if (path.find(imageName) != std::string::npos)
+					{
+						if (path.find("_L") != std::string::npos) paths.leftCompressed = path;
+						else if (path.find("_R") != std::string::npos) paths.rightCompressed = path;
+						else Utils::FatalError("path=" + path);
+					}
+				}
+			}
+			else
+			{
+				for (auto& file : std::filesystem::directory_iterator(originalDirectory))
+				{
+					auto path = file.path().string();
+					if (path.find(imageName) != std::string::npos)
+					{
+						if (mode == Mode::Mono_Left && path.find("_L") != std::string::npos) {
+							paths.leftOriginal = path;
+							paths.rightOriginal = path;
+						}
+						else if (mode == Mode::Mono_Right && path.find("_R") != std::string::npos) {
+							paths.leftOriginal = path;
+							paths.rightOriginal = path;
+						}
+					}
+				}
+
+				for (auto& file : std::filesystem::directory_iterator(decompressedDirectory))
+				{
+					auto path = file.path().string();
+					if (path.find(imageName) != std::string::npos)
+					{
+						if (mode == Mode::Mono_Left && path.find("_L") != std::string::npos) {
+							paths.leftCompressed = path;
+							paths.rightCompressed = path;
+						}
+						else if (mode == Mode::Mono_Right && path.find("_R") != std::string::npos) {
+							paths.leftCompressed = path;
+							paths.rightCompressed = path;
+						}
+					}
+				}
+			}
+
+			return paths;
+		}
 	};
 
 	std::ostream& operator<<(std::ostream& os, const Trial& t);
@@ -80,7 +152,6 @@ namespace Experiment {
 	struct Run
 	{
 		int session = 0;
-		std::string originalImageDirectory = "";
 
 		Participant participant = {};
 		std::vector<Trial> trials = {};
@@ -93,7 +164,7 @@ namespace Experiment {
 			return trials.size();
 		}
 	};
-	
+
 	namespace Configuration
 	{
 		using namespace std::chrono;

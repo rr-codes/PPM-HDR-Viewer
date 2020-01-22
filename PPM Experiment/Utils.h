@@ -91,7 +91,8 @@ namespace Utils
 			if (i == 0) return left;
 			if (i == 1) return right;
 
-			throw std::out_of_range("");
+			Utils::FatalError("i=" + std::to_string(i));
+			return left;
 		}
 
 		const T& operator[](int i) const
@@ -99,7 +100,8 @@ namespace Utils
 			if (i == 0) return left;
 			if (i == 1) return right;
 
-			throw std::out_of_range("");
+			Utils::FatalError("i=" + std::to_string(i));
+			return left;
 		}
 	};
 }

@@ -174,7 +174,7 @@ namespace CSV
 					row_ = reader_->next_row();
 					return *this;
 				}
-				catch (...) {}
+				catch (std::out_of_range oor) {}
 			}
 
 			reader_ = nullptr;

@@ -11,7 +11,7 @@ namespace Experiment {
 	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
 	{
 		m_audioEngine = std::make_unique<DirectX::AudioEngine>(DirectX::AudioEngine_Default);
-		
+
 		const auto dir = std::filesystem::cwd().generic_wstring() + L"/sounds/" + FAILURE;
 		m_failureSound = std::make_unique<DirectX::SoundEffect>(m_audioEngine.get(), dir.c_str());
 
@@ -61,7 +61,7 @@ namespace Experiment {
 	bool Controller::GetResponse(const DirectX::GamePad::State state)
 	{
 		timeAtPress = m_stopwatch->Elapsed().count();
-		
+
 		const auto PRESSED = DirectX::GamePad::ButtonStateTracker::PRESSED;
 
 		const auto right = m_buttons.rightTrigger;
@@ -120,17 +120,17 @@ namespace Experiment {
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image) const
 	{
 		return ToResourceBase(image, [](auto m)
-		{
-			return m;
-		});
+			{
+				return m;
+			});
 	}
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> Controller::ToResource(const std::filesystem::path& image, Vector region) const
 	{
 		return ToResourceBase(image, [&](auto m)
-		{
-			return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
-		});
+			{
+				return CropMatrix(m, cv::Rect(region.x, region.y, Configuration::ImageDimensions.x, Configuration::ImageDimensions.y));
+			});
 	}
 
 
@@ -192,7 +192,7 @@ namespace Experiment {
 
 		return shader;
 	}
-	
+
 
 	SingleView Controller::SetStaticStereoView(const Utils::Duo<std::filesystem::path>& views) const
 	{
@@ -209,40 +209,65 @@ namespace Experiment {
 
 	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
-		const auto modifiedImageStart = trial.directory + "/" + trial.imageName;
-		const auto originalImageStart = m_run.originalImageDirectory + "/" + trial.imageName;
+		//const auto modifiedImageStart = trial.directory + "/" + trial.imageName;
+		//const auto originalImageStart = m_run.originalImageDirectory + "/" + trial.imageName;
 
-		Utils::Duo<std::string> sidePrefixes = {};
+		//Utils::Duo<std::string> sidePrefixes = {};
 
-		switch (trial.mode)
-		{
-		case Mode::Mono_Left:
-			sidePrefixes = { "_L", "_L" };
-			break;
+		//switch (trial.mode)
+		//{
+		//case Mode::Mono_Left:
+		//	sidePrefixes = { "_L", "_L" };
+		//	break;
 
-		case Mode::Mono_Right:
-			sidePrefixes = { "_R", "_R" };
-			break;
+		//case Mode::Mono_Right:
+		//	sidePrefixes = { "_R", "_R" };
+		//	break;
 
-		case Mode::Stereo:
-			sidePrefixes = { "_L", "_R" };
-		}
+		//case Mode::Stereo:
+		//	sidePrefixes = { "_L", "_R" };
+		//}
 
-		auto files = std::vector<std::string>{
-			modifiedImageStart + sidePrefixes.left  + "_dec.ppm" ,
-			originalImageStart + sidePrefixes.left  + "_orig.ppm",
-			modifiedImageStart + sidePrefixes.right + "_dec.ppm" ,
-			originalImageStart + sidePrefixes.right + "_orig.ppm",
+		//auto files = std::vector<std::string>{
+		//	modifiedImageStart + sidePrefixes.left  + "_dec.ppm" ,
+		//	originalImageStart + sidePrefixes.left  + "_orig.ppm",
+		//	modifiedImageStart + sidePrefixes.right + "_dec.ppm" ,
+		//	originalImageStart + sidePrefixes.right + "_orig.ppm",
+		//};
+		//
+		//
+
+		auto paths = trial.imagePaths(trial.mode);
+		auto files = std::vector<std::filesystem::path>{
+			paths.leftCompressed,
+			paths.leftOriginal,
+			paths.rightCompressed,
+			paths.rightOriginal
 		};
 
-		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
-		const auto dims = DirectX::SimpleMath::Vector2{3840 * 2, 2160};
-
-		views.reserve(files.size());
-		for (auto& file : files)
+		for (auto& path : files)
 		{
-			views.push_back(ToResource(file, trial.position));
+			if (!std::filesystem::exists(path))
+			{
+				Utils::FatalError("Controller: " + path.string() + " is not a valid path");
+			}
 		}
+
+		std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views(4);
+
+		std::transform(files.begin(), files.end(), views.begin(), [this, trial](const std::filesystem::path path)
+			{
+				return ToResource(path, trial.position);
+			});
+
+		//std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
+		const auto dims = DirectX::SimpleMath::Vector2{ 3840 * 2, 2160 };
+
+		//views.reserve(files.size());
+		//for (auto& file : files)
+		//{
+		//	views.push_back(ToResource(file, trial.position));
+		//}
 
 		auto halfDist = static_cast<float>(Configuration::ImageDistance) / 2;
 		auto yPos = dims.y / 2 - static_cast<float>(Configuration::ImageDimensions.y) / 2;
@@ -264,6 +289,8 @@ namespace Experiment {
 
 		flicker.left[i].image = views[0];
 		flicker.right[i].image = views[2];
+
+
 
 		return std::make_pair(no_flicker, flicker);
 	}

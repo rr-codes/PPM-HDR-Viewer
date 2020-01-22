@@ -1,6 +1,6 @@
 #include "Participant.h"
 #include "Utils.h"
-#include "CSV.h"
+#include "csv.h"
 #include <regex>
 
 namespace Experiment
@@ -9,9 +9,10 @@ namespace Experiment
 
 	static CompressionConfiguration GetCodec(const std::string& dir)
 	{
+		const std::regex base_regex(R"(.*RGB_444_bpc=\d+_bpp=(.*?)_.*)");
+		
 		if (std::regex_match(dir, std::regex(".*(DSC).*")))
 		{
-			const std::regex base_regex(R"(.*DSCv1\.2_VESATestSet_\d+bpc_.+_(.*?)bpp_SH=\d+_SPL=\d+_0000)");
 			std::smatch base_match;
 
 			if (std::regex_match(dir, base_match, base_regex))
@@ -22,7 +23,6 @@ namespace Experiment
 
 		if (std::regex_match(dir, std::regex(".*(VDCM).*")))
 		{
-			const std::regex base_regex(R"(.*VESATestSet.+_bpc=\d+_bpp=(.*?)\.0000_spl=\d+_csc_bypass=.*)");
 			std::smatch base_match;
 
 			if (std::regex_match(dir, base_match, base_regex))
@@ -31,7 +31,7 @@ namespace Experiment
 			}
 		}
 
-		return {Codec::Control, 0};
+		return { Codec::Control, 0 };
 	}
 
 	std::istream& operator>>(std::istream& is, Option& o)
@@ -103,15 +103,15 @@ namespace Experiment
 		}
 
 		os << std::tuple(
-			t.compression, 
-			t.imageName, 
+			t.compression,
+			t.imageName,
 			(t.correctOption == Option::Left ? "Left" : "Right"),
 			t.position,
 			mode,
 			(t.participantResponse == Option::Left ? "Left" : "Right"),
 			t.duration
 		);
-		
+
 		return os;
 	}
 
@@ -128,10 +128,10 @@ namespace Experiment
 		file << participant << std::endl;
 		file << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 
-		for (int i = 0; i < trials.size(); i++)
+		for (const auto& trial : trials)
 		{
-			if (trials[i].participantResponse == Option::None) continue;
-			file << std::tuple(trials[i], participant.id) << "\n";
+			if (trial.participantResponse == Option::None) continue;
+			file << std::tuple(trial, participant.id) << "\n";
 		}
 
 		file.close();
@@ -141,8 +141,7 @@ namespace Experiment
 	/// id [alphanumeric]
 	/// age
 	/// gender [M/F]
-	/// Original image directory [C:\parent\child\orig]
-	/// image directory [C:\parent\...], image name, side [1/2], position x, position y, viewing mode [0/1/2]
+	/// original directory, decompressed directory, image name, side [1/2], position x, position y, viewing mode [0/1/2]
 	///
 	/// Image directory MUST end in either 'VESATestSetRGB_444_bpc=10_bpp=*.0000_spl=2_csc_bypass=off' or 'DSCv1.2_VESATestSet_10bpc_RGB_444_*bpp_SH=108_SPL=2_0000'
 	Run Run::CreateRun(const std::filesystem::path& configPath)
@@ -151,29 +150,33 @@ namespace Experiment
 		{
 			Utils::FatalError(configPath.generic_string() + " is not a valid path");
 		}
-		
+
 		std::ifstream file(configPath);
-		auto csv = CSV::Reader<std::string, std::string, Option, int, int, Mode>(file);
+		auto csv = CSV::Reader<std::string, std::string, std::string, Option, int, int, Mode>(file);
 
 		Run run = {};
 
 		file >> run.participant.groupNumber >> run.session
-			>> run.participant.id >> run.participant.age >> run.participant.gender
-			>> run.originalImageDirectory;
+			>> run.participant.id >> run.participant.age >> run.participant.gender;
 
-		for (auto [directory, name, option, x, y, mode] : csv)
-		{			
+		for (auto [originalDirectory, decompressedDirectory, name, option, x, y, mode] : csv)
+		{
+			if (option == Option::None)
+			{
+				Utils::FatalError("Correct Option cannot be 0");
+			}
+			
 			run.trials.push_back({
-				directory,
+				originalDirectory,
+				decompressedDirectory,
 				name,
 				option,
 				{x, y},
 				mode,
-				GetCodec(directory)
-			});
+				GetCodec(decompressedDirectory)
+				});
 		}
-		
+
 		return run;
 	}
 }
-

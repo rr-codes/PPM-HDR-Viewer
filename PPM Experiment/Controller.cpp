@@ -112,6 +112,8 @@ namespace Experiment {
 
 			m_startButtonHasBeenPressed = false;
 
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
 			ExitGame();
 			exit(0);
 		}
@@ -209,33 +211,6 @@ namespace Experiment {
 
 	std::pair<DuoView, DuoView> Controller::SetFlickerStereoViews(const Trial& trial) const
 	{
-		//const auto modifiedImageStart = trial.directory + "/" + trial.imageName;
-		//const auto originalImageStart = m_run.originalImageDirectory + "/" + trial.imageName;
-
-		//Utils::Duo<std::string> sidePrefixes = {};
-
-		//switch (trial.mode)
-		//{
-		//case Mode::Mono_Left:
-		//	sidePrefixes = { "_L", "_L" };
-		//	break;
-
-		//case Mode::Mono_Right:
-		//	sidePrefixes = { "_R", "_R" };
-		//	break;
-
-		//case Mode::Stereo:
-		//	sidePrefixes = { "_L", "_R" };
-		//}
-
-		//auto files = std::vector<std::string>{
-		//	modifiedImageStart + sidePrefixes.left  + "_dec.ppm" ,
-		//	originalImageStart + sidePrefixes.left  + "_orig.ppm",
-		//	modifiedImageStart + sidePrefixes.right + "_dec.ppm" ,
-		//	originalImageStart + sidePrefixes.right + "_orig.ppm",
-		//};
-		//
-		//
 
 		auto paths = trial.imagePaths(trial.mode);
 		auto files = std::vector<std::filesystem::path>{
@@ -262,12 +237,6 @@ namespace Experiment {
 
 		//std::vector<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>> views;
 		const auto dims = DirectX::SimpleMath::Vector2{ 3840 * 2, 2160 };
-
-		//views.reserve(files.size());
-		//for (auto& file : files)
-		//{
-		//	views.push_back(ToResource(file, trial.position));
-		//}
 
 		auto halfDist = static_cast<float>(Configuration::ImageDistance) / 2;
 		auto yPos = dims.y / 2 - static_cast<float>(Configuration::ImageDimensions.y) / 2;

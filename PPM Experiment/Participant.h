@@ -23,6 +23,20 @@ namespace Experiment {
 
 	std::istream& operator>>(std::istream& is, Mode& m);
 
+	enum class Bypass
+	{
+		Null, On, Off
+	};
+
+	std::ostream& operator<<(std::ostream& os, const Bypass& b);
+
+	enum class Distortion
+	{
+		Null, Default, Warped
+	};
+
+	std::ostream& operator<<(std::ostream& os, const Distortion& d);
+
 	enum class Gender
 	{
 		None, Male, Female
@@ -35,13 +49,15 @@ namespace Experiment {
 		Control, DSC, VDCM
 	};
 
+	std::ostream& operator<<(std::ostream& os, const Codec& c);
+
 	struct CompressionConfiguration
 	{
 		Codec codec = Codec::Control;
+		Bypass bypass;
+		Distortion distortion;
 		int bpc = 0;
 	};
-
-	std::ostream& operator<<(std::ostream& os, const CompressionConfiguration& c);
 
 	struct Vector
 	{
@@ -65,7 +81,7 @@ namespace Experiment {
 		Vector position = {};
 		Mode mode = Mode::Stereo;
 
-		CompressionConfiguration compression = { Codec::Control, 0 };
+		CompressionConfiguration compression;
 
 		Option participantResponse = Option::None;
 		double duration = 0.0;

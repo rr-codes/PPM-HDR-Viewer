@@ -7,31 +7,23 @@ namespace Experiment
 {
 	using CSV::TupleHelper::operator<<;
 
-	static CompressionConfiguration GetCodec(const std::string& dir)
+	static CompressionConfiguration GetCompressionConfiguration(const std::string& dir)
 	{
-		const std::regex base_regex(R"(.*RGB_444_bpc=\d+_bpp=(.*?)_.*)");
+		const std::regex regex(R"(.*(test_original_compressed|test_prewarped_unwarped_compressed)\\(DSC.*|VDCM.*)\\RGB_444_bpc=(\d*)_bpp=(\d*).*bypass=(off|on).*)");
+
+		std::smatch match;
+		if (std::regex_match(dir, match, regex))
+		{
+			const auto distortion = match[1].str() == "test_original_compressed" ? Distortion::Default : Distortion::Warped;
+			const auto compression = match[2].str() == "DSC" ? Codec::DSC : Codec::VDCM;
+			const auto bpc = std::stoi(match[3].str());
+			const auto bypass = match[5].str() == "off" ? Bypass::Off : Bypass::On;
+
+			return { compression, bypass, distortion, bpc };
+		}
+
+		return { Codec::Control, Bypass::Null, Distortion::Null, 0 };
 		
-		if (std::regex_match(dir, std::regex(".*(DSC).*")))
-		{
-			std::smatch base_match;
-
-			if (std::regex_match(dir, base_match, base_regex))
-			{
-				return { Codec::DSC, std::stoi(base_match[1].str()) };
-			}
-		}
-
-		if (std::regex_match(dir, std::regex(".*(VDCM).*")))
-		{
-			std::smatch base_match;
-
-			if (std::regex_match(dir, base_match, base_regex))
-			{
-				return { Codec::VDCM, std::stoi(base_match[1].str()) };
-			}
-		}
-
-		return { Codec::Control, 0 };
 	}
 
 	std::istream& operator>>(std::istream& is, Option& o)
@@ -51,6 +43,7 @@ namespace Experiment
 		m = static_cast<Mode>(std::stoi(s));
 		return is;
 	}
+
 
 	std::istream& operator>>(std::istream& is, Gender& g)
 	{
@@ -73,16 +66,39 @@ namespace Experiment
 		return is;
 	}
 
-	std::ostream& operator<<(std::ostream& os, const CompressionConfiguration& c)
+	std::ostream& operator<<(std::ostream& os, const Codec& c)
 	{
-		switch (c.codec)
+		switch (c)
 		{
 		case Codec::VDCM: os << "VDCM"; break;
 		case Codec::DSC: os << "DSC"; break;
 		default: os << "Control";
 		}
 
-		os << " " << c.bpc << " bpp";
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Bypass& b)
+	{
+		switch (b)
+		{
+		case Bypass::On: os << "Bypass ON"; break;
+		case Bypass::Off: os << "Bypass OFF"; break;
+		default: os << "";
+		}
+
+		return os;
+	}
+
+	std::ostream& operator<<(std::ostream& os, const Distortion& d)
+	{
+		switch (d)
+		{
+		case Distortion::Warped: os << "Warped"; break;
+		case Distortion::Default: os << "Not Warped"; break;
+		default: os << "";
+		}
+
 		return os;
 	}
 
@@ -103,7 +119,10 @@ namespace Experiment
 		}
 
 		os << std::tuple(
-			t.compression,
+			t.compression.codec,
+			t.compression.bpc,
+			t.compression.distortion,
+			t.compression.bypass,
 			t.imageName,
 			(t.correctOption == Option::Left ? "Left" : "Right"),
 			t.position,
@@ -126,7 +145,7 @@ namespace Experiment
 		std::ofstream file(path.generic_string());
 
 		file << participant << std::endl;
-		file << "Codec, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
+		file << "Codec, BPC, Distortion, Bypass, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 
 		for (const auto& trial : trials)
 		{
@@ -173,7 +192,7 @@ namespace Experiment
 				option,
 				{x, y},
 				mode,
-				GetCodec(decompressedDirectory)
+				GetCompressionConfiguration(decompressedDirectory)
 				});
 		}
 

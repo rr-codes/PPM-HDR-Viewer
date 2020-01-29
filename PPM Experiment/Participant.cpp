@@ -7,6 +7,11 @@ namespace Experiment
 {
 	using CSV::TupleHelper::operator<<;
 
+	static bool contains(const std::string& str, const std::string& substring)
+	{
+		return str.find(substring) != std::string::npos;
+	}
+
 	static CompressionConfiguration GetCompressionConfiguration(const std::string& dir)
 	{
 		const std::regex regex(R"(.*(test_original_compressed|test_prewarped_unwarped_compressed)\\(DSC.*|VDCM.*)\\RGB_444_bpc=(\d*)_bpp=(\d*).*bypass=(off|on).*)");
@@ -15,8 +20,8 @@ namespace Experiment
 		if (std::regex_match(dir, match, regex))
 		{
 			const auto distortion = match[1].str() == "test_original_compressed" ? Distortion::Default : Distortion::Warped;
-			const auto compression = match[2].str() == "DSC" ? Codec::DSC : Codec::VDCM;
-			const auto bpc = std::stoi(match[3].str());
+			const auto compression = contains(match[2].str(), "DSC") ? Codec::DSC : Codec::VDCM;
+			const auto bpc = std::stoi(match[4].str());
 			const auto bypass = match[5].str() == "off" ? Bypass::Off : Bypass::On;
 
 			return { compression, bypass, distortion, bpc };
@@ -145,7 +150,7 @@ namespace Experiment
 		std::ofstream file(path.generic_string());
 
 		file << participant << std::endl;
-		file << "Codec, BPC, Distortion, Bypass, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
+		file << "Codec, BPP, Distortion, Bypass, Image, Side, Position-X, Position-Y, Mode, Response, Duration, Subject" << std::endl;
 
 		for (const auto& trial : trials)
 		{

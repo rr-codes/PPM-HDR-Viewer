@@ -5,7 +5,7 @@
 extern void ExitGame();
 
 namespace Experiment {
-	static const std::string DESTINATION_PATH = R"(C:\projects\VESA_3D_HDR_Testing_October_2019\Data\)";
+	static const std::string DESTINATION_PATH = R"(C:\projects\VESA_phase3\Data\)";
 	constexpr int FRAME_INTERVAL = 20;
 
 	Controller::Controller(Run& run, DX::DeviceResources* deviceResources) : m_deviceResources(deviceResources), m_run(run)
@@ -71,8 +71,12 @@ namespace Experiment {
 
 		if (m_buttons.a == PRESSED || m_buttons.b == PRESSED)
 		{
-			m_startButtonHasBeenPressed = true;
-			m_stopwatch->Restart();
+			if (!m_startButtonHasBeenPressed)
+			{
+				m_startButtonHasBeenPressed = true;
+				m_stopwatch->Restart();
+			}
+
 			return false;
 		}
 
